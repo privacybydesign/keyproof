@@ -1,0 +1,71 @@
+package qspp
+
+import "github.com/mhe/gabi/big"
+
+type DisjointPrimeProductProof struct {
+	Responses []*big.Int
+}
+
+func DisjointPrimeProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, index *big.Int) DisjointPrimeProductProof {
+	// Precalculate values for response
+	N := new(big.Int).Mul(P, Q)
+	phiN := new(big.Int).Mul(new(big.Int).Sub(P, big.NewInt(1)), new(big.Int).Sub(Q, big.NewInt(1)))
+	oddN := new(big.Int).Sub(N, big.NewInt(1))
+	for oddN.Bit(0) == 0 {
+		oddN.Rsh(oddN, 1)
+	}
+	oddNInv := new(big.Int).ModInverse(oddN, phiN)
+	if oddNInv == nil {
+		panic("P*Q is not a disjoint prime product!")
+	}
+
+	// Generate the challenges and responses
+	var proof DisjointPrimeProductProof
+	proof.Responses = []*big.Int{}
+	for i := 0; i < squareFreeIters; i++ {
+		// Generate the challenge
+		curc := getHashNumber(challenge, index, i, N.BitLen())
+		curc.Mod(curc, N)
+
+		if new(big.Int).GCD(nil, nil, curc, N).Cmp(big.NewInt(1)) != 0 {
+			panic("Generated number not in Z_N")
+		}
+
+		// Generate response
+		proof.Responses = append(proof.Responses, new(big.Int).Exp(curc, oddNInv, N))
+	}
+
+	return proof
+}
+
+func DisjointPrimeProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof DisjointPrimeProductProof) bool {
+	// Validate proof structure
+	if len(proof.Responses) != disjointPrimeProductIters {
+		return false
+	}
+
+	// Check that N is not a fermat prime
+	if N.ProbablyPrime(80) {
+		return false
+	}
+
+	// Calculate oddN
+	oddN := new(big.Int).Sub(N, big.NewInt(1))
+	for oddN.Bit(0) == 0 {
+		oddN.Rsh(oddN, 1)
+	}
+
+	// Generate the challenges and verify responses
+	for i := 0; i < squareFreeIters; i++ {
+		// Generate the challenge
+		curc := getHashNumber(challenge, index, i, N.BitLen())
+		curc.Mod(curc, N)
+
+		responseResult := new(big.Int).Exp(proof.Responses[i], oddN, N)
+		if responseResult.Cmp(curc) != 0 {
+			return false
+		}
+	}
+
+	return true
+}
