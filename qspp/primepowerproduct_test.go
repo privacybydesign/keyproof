@@ -7,6 +7,10 @@ func TestPrimePowerProductCycle(t *testing.T) {
 	const p = 1031
 	const q = 1061
 	proof := PrimePowerProductBuildProof(big.NewInt(int64(p)), big.NewInt(int64(q)), big.NewInt(12345), big.NewInt(1))
+	if !PrimePowerProductVerifyStructure(proof) {
+		t.Error("Proof structure rejected")
+		return
+	}
 	ok := PrimePowerProductVerifyProof(big.NewInt(int64(p*q)), big.NewInt(12345), big.NewInt(1), proof)
 	if !ok {
 		t.Error("PrimePowerProductProof rejected")
@@ -44,24 +48,26 @@ func TestPrimePowerProductCycleWrongIndex(t *testing.T) {
 	}
 }
 
-func TestPrimePowerProductCycleTooShort(t *testing.T) {
+func TestPrimePowerProductVerifyStructure(t *testing.T) {
 	const p = 1031
 	const q = 1061
 	proof := PrimePowerProductBuildProof(big.NewInt(int64(p)), big.NewInt(int64(q)), big.NewInt(12345), big.NewInt(1))
+	
+	listBackup := proof.Responses
 	proof.Responses = proof.Responses[:len(proof.Responses)-1]
-	ok := PrimePowerProductVerifyProof(big.NewInt(int64(p*q)), big.NewInt(12345), big.NewInt(1), proof)
-	if ok {
-		t.Error("Incorrect PrimePowerProductProof accepted")
+	if PrimePowerProductVerifyStructure(proof) {
+		t.Error("Accepting too short responses")
 	}
-}
-
-func TestPrimePowerProductEmpty(t *testing.T) {
-	const p = 1031
-	const q = 1061
-	var proof PrimePowerProductProof
-	proof.Responses = []*big.Int{}
-	ok := PrimePowerProductVerifyProof(big.NewInt(int64(p*q)), big.NewInt(12345), big.NewInt(1), proof)
-	if ok {
-		t.Error("Incorrect PrimePowerProductProof accepted")
+	proof.Responses = listBackup
+	
+	valBackup := proof.Responses[2]
+	proof.Responses[2] = nil
+	if PrimePowerProductVerifyStructure(proof) {
+		t.Error("Accepting missing response")
+	}
+	proof.Responses[2] = valBackup
+	
+	if !PrimePowerProductVerifyStructure(proof) {
+		t.Error("testcase corrupted testdata")
 	}
 }

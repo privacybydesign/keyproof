@@ -7,6 +7,10 @@ func TestDisjointPrimeProductCycle(t *testing.T) {
 	const p = 2063
 	const q = 1187
 	proof := DisjointPrimeProductBuildProof(big.NewInt(p), big.NewInt(q), big.NewInt(12345), big.NewInt(2))
+	if !DisjointPrimeProductVerifyStructure(proof) {
+		t.Error("Proof structure rejected")
+		return
+	}
 	ok := DisjointPrimeProductVerifyProof(big.NewInt(p*q), big.NewInt(12345), big.NewInt(2), proof)
 	if !ok {
 		t.Error("DisjointPrimeProductProof rejected.")
@@ -44,24 +48,26 @@ func TestDisjointPrimeProductWrongIndex(t *testing.T) {
 	}
 }
 
-func TestDisjointPrimeProductCycleTooShort(t *testing.T) {
+func TestDisjointPrimeProductVerifyStructure(t *testing.T) {
 	const p = 2063
 	const q = 1187
 	proof := DisjointPrimeProductBuildProof(big.NewInt(p), big.NewInt(q), big.NewInt(12345), big.NewInt(2))
+	
+	listBackup := proof.Responses
 	proof.Responses = proof.Responses[:len(proof.Responses)-1]
-	ok := DisjointPrimeProductVerifyProof(big.NewInt(p*q), big.NewInt(12345), big.NewInt(2), proof)
-	if ok {
-		t.Error("Incorrect DisjointPrimeProductProof accepted.")
+	if DisjointPrimeProductVerifyStructure(proof) {
+		t.Error("Accepting too short responses")
 	}
-}
-
-func TestDisjointPrimeProductEmpty(t *testing.T) {
-	const p = 2063
-	const q = 1187
-	var proof DisjointPrimeProductProof
-	proof.Responses = []*big.Int{}
-	ok := DisjointPrimeProductVerifyProof(big.NewInt(p*q), big.NewInt(12345), big.NewInt(2), proof)
-	if ok {
-		t.Error("Incorrect DisjointPrimeProductProof accepted.")
+	proof.Responses = listBackup
+	
+	valBackup := proof.Responses[2]
+	proof.Responses[2] = nil
+	if DisjointPrimeProductVerifyStructure(proof) {
+		t.Error("Accepting missing response")
+	}
+	proof.Responses[2] = valBackup
+	
+	if !DisjointPrimeProductVerifyStructure(proof) {
+		t.Error("Testcase corrupted testdata")
 	}
 }

@@ -36,6 +36,13 @@ func QuasiSafePrimeProductBuildProof(Pprime *big.Int, Qprime *big.Int, challenge
 	return proof
 }
 
+func QuasiSafePrimeProductVerifyStructure(proof QuasiSafePrimeProductProof) bool {
+	return SquareFreeVerifyStructure(proof.SFproof) &&
+		PrimePowerProductVerifyStructure(proof.PPPproof) &&
+		DisjointPrimeProductVerifyStructure(proof.DPPproof) &&
+		AlmostSafePrimeProductVerifyStructure(proof.ASPPproof)
+}		
+
 func QuasiSafePrimeProductExtractCommitments(list []*big.Int, proof QuasiSafePrimeProductProof) []*big.Int {
 	return AlmostSafePrimeProductExtractCommitments(list, proof.ASPPproof)
 }

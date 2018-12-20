@@ -32,6 +32,20 @@ func SquareFreeBuildProof(N *big.Int, phiN *big.Int, challenge *big.Int, index *
 	return proof
 }
 
+func SquareFreeVerifyStructure(proof SquareFreeProof) bool {
+	if proof.Responses == nil || len(proof.Responses) != squareFreeIters {
+		return false
+	}
+	
+	for _, val := range proof.Responses {
+		if val == nil {
+			return false
+		}
+	}
+	
+	return true
+}
+
 func SquareFreeVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof SquareFreeProof) bool {
 	// Verify proof structure
 	if len(proof.Responses) != squareFreeIters {

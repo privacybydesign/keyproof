@@ -8,6 +8,10 @@ func TestAlmostSafePrimeProductCycle(t *testing.T) {
 	const q = 13901
 	listBefore, commit := AlmostSafePrimeProductBuildCommitments([]*big.Int{}, big.NewInt(p), big.NewInt(q))
 	proof := AlmostSafePrimeProductBuildProof(big.NewInt(p), big.NewInt(q), big.NewInt(12345), big.NewInt(3), commit)
+	if !AlmostSafePrimeProductVerifyStructure(proof) {
+		t.Error("Proof structure rejected")
+		return
+	}
 	listAfter := AlmostSafePrimeProductExtractCommitments([]*big.Int{}, proof)
 	ok := AlmostSafePrimeProductVerifyProof(big.NewInt((2*p+1)*(2*q+1)), big.NewInt(12345), big.NewInt(3), proof)
 	if !ok {
@@ -59,39 +63,48 @@ func TestAlmostSafePrimeProductCycleIncorrectResponse(t *testing.T) {
 	}
 }
 
-func TestAlmostSafePrimeProductCycleTooShortCommit(t *testing.T) {
+func TestAlmostSafePrimeProductVerifyStructure(t *testing.T) {
 	const p = 13451
 	const q = 13901
 	_, commit := AlmostSafePrimeProductBuildCommitments([]*big.Int{}, big.NewInt(p), big.NewInt(q))
 	proof := AlmostSafePrimeProductBuildProof(big.NewInt(p), big.NewInt(q), big.NewInt(12345), big.NewInt(3), commit)
+	
+	listBackup := proof.Commitments
 	proof.Commitments = proof.Commitments[:len(proof.Commitments)-1]
-	ok := AlmostSafePrimeProductVerifyProof(big.NewInt((2*p+1)*(2*q+1)), big.NewInt(12345), big.NewInt(3), proof)
-	if ok {
-		t.Error("Incorrect AlmostSafePrimeProductProof accepted.")
+	if AlmostSafePrimeProductVerifyStructure(proof) {
+		t.Error("Accepiting too short commitments")
 	}
-}
-
-func TestAlmostSafePrimeProductCycleTooShortResponses(t *testing.T) {
-	const p = 13451
-	const q = 13901
-	_, commit := AlmostSafePrimeProductBuildCommitments([]*big.Int{}, big.NewInt(p), big.NewInt(q))
-	proof := AlmostSafePrimeProductBuildProof(big.NewInt(p), big.NewInt(q), big.NewInt(12345), big.NewInt(3), commit)
+	proof.Commitments = listBackup
+	
+	listBackup = proof.Responses
 	proof.Responses = proof.Responses[:len(proof.Responses)-1]
-	ok := AlmostSafePrimeProductVerifyProof(big.NewInt((2*p+1)*(2*q+1)), big.NewInt(12345), big.NewInt(3), proof)
-	if ok {
-		t.Error("Incorrect AlmostSafePrimeProductProof accepted.")
+	if AlmostSafePrimeProductVerifyStructure(proof) {
+		t.Error("Accepting too short responses")
 	}
-}
-
-func TestAlmostSafePrimeProductEmpty(t *testing.T) {
-	const p = 13451
-	const q = 13901
-	var proof AlmostSafePrimeProductProof
-	proof.Nonce = big.NewInt(12345)
-	proof.Commitments = []*big.Int{}
-	proof.Responses = []*big.Int{}
-	ok := AlmostSafePrimeProductVerifyProof(big.NewInt((2*p+1)*(2*q+1)), big.NewInt(12345), big.NewInt(3), proof)
-	if ok {
-		t.Error("Incorrect AlmostSafePrimeProductProof accepted.")
+	proof.Responses = listBackup
+	
+	valBackup := proof.Commitments[2]
+	proof.Commitments[2] = nil
+	if AlmostSafePrimeProductVerifyStructure(proof) {
+		t.Error("Accepting missing commitment")
+	}
+	proof.Commitments[2] = valBackup
+	
+	valBackup = proof.Responses[3]
+	proof.Responses[3] = nil
+	if AlmostSafePrimeProductVerifyStructure(proof) {
+		t.Error("Accepting missing response")
+	}
+	proof.Responses[3] = valBackup
+	
+	valBackup = proof.Nonce
+	proof.Nonce = nil
+	if AlmostSafePrimeProductVerifyStructure(proof) {
+		t.Error("Accepting missing nonce")
+	}
+	proof.Nonce = valBackup
+	
+	if !AlmostSafePrimeProductVerifyStructure(proof) {
+		t.Error("Testing messed up testdata")
 	}
 }

@@ -98,16 +98,37 @@ func AlmostSafePrimeProductBuildProof(Pprime *big.Int, Qprime *big.Int, challeng
 	return proof
 }
 
+func AlmostSafePrimeProductVerifyStructure(proof AlmostSafePrimeProductProof) bool {
+	if proof.Nonce == nil {
+		return false
+	}
+	if proof.Commitments == nil || proof.Responses == nil {
+		return false
+	}
+	if len(proof.Commitments) != almostSafePrimeProductIters || len(proof.Responses) != almostSafePrimeProductIters {
+		return false
+	}
+	
+	for _, val := range proof.Commitments {
+		if val == nil {
+			return false
+		}
+	}
+	
+	for _, val := range proof.Responses {
+		if val == nil {
+			return false
+		}
+	}
+	
+	return true
+}
+
 func AlmostSafePrimeProductExtractCommitments(list []*big.Int, proof AlmostSafePrimeProductProof) []*big.Int {
 	return append(list, proof.Commitments...)
 }
 
 func AlmostSafePrimeProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof AlmostSafePrimeProductProof) bool {
-	// Verify proof structure
-	if len(proof.Commitments) != almostSafePrimeProductIters || len(proof.Responses) != almostSafePrimeProductIters {
-		return false
-	}
-
 	// Verify N=1(mod 3), as this decreases the error prob from 9/10 to 4/5
 	if new(big.Int).Mod(N, big.NewInt(3)).Cmp(big.NewInt(1)) != 0 {
 		return false

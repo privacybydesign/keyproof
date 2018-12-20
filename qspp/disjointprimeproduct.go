@@ -38,12 +38,21 @@ func DisjointPrimeProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, 
 	return proof
 }
 
-func DisjointPrimeProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof DisjointPrimeProductProof) bool {
-	// Validate proof structure
-	if len(proof.Responses) != disjointPrimeProductIters {
+func DisjointPrimeProductVerifyStructure(proof DisjointPrimeProductProof) bool {
+	if proof.Responses == nil || len(proof.Responses) != disjointPrimeProductIters {
 		return false
 	}
+	
+	for _, val := range proof.Responses {
+		if val == nil {
+			return false
+		}
+	}
+	
+	return true
+}
 
+func DisjointPrimeProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof DisjointPrimeProductProof) bool {
 	// Check that N is not a fermat prime
 	if N.ProbablyPrime(80) {
 		return false

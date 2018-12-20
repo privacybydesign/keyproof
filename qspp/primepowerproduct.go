@@ -48,12 +48,21 @@ func PrimePowerProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, ind
 	return proof
 }
 
-func PrimePowerProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof PrimePowerProductProof) bool {
-	// Verify proof structure
-	if len(proof.Responses) != primePowerProductIters {
+func PrimePowerProductVerifyStructure(proof PrimePowerProductProof) bool {
+	if proof.Responses == nil || len(proof.Responses) != primePowerProductIters {
 		return false
 	}
+	
+	for _, val := range proof.Responses {
+		if val == nil {
+			return false
+		}
+	}
+	
+	return true
+}
 
+func PrimePowerProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof PrimePowerProductProof) bool {
 	// Generate the challenges and responses
 	for i := 0; i < primePowerProductIters; i++ {
 		// Generate the challenge
