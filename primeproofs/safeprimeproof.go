@@ -1,6 +1,7 @@
 package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
+import "github.com/privacybydesign/keyproof/qspp"
 import "github.com/mhe/gabi/big"
 import "github.com/mhe/gabi/safeprime"
 
@@ -29,6 +30,8 @@ type SafePrimeProof struct {
 
 	PprimeIsPrimeProof PrimeProof
 	QprimeIsPrimeProof PrimeProof
+
+	QSPPproof qspp.QuasiSafePrimeProductProof
 }
 
 type SafePrimeSecret struct {
@@ -57,7 +60,7 @@ func (p *SafePrimeProof) GetResult(name string) *big.Int {
 	return nil
 }
 
-func newSafePrimeProofStructure(N *big.Int) SafePrimeProofStructure {
+func NewSafePrimeProofStructure(N *big.Int) SafePrimeProofStructure {
 	var structure SafePrimeProofStructure
 
 	structure.N = new(big.Int).Set(N)
@@ -106,7 +109,7 @@ func newSafePrimeProofStructure(N *big.Int) SafePrimeProofStructure {
 	return structure
 }
 
-func (s SafePrimeProofStructure) buildProof(Pprime *big.Int, Qprime *big.Int) SafePrimeProof {
+func (s SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) SafePrimeProof {
 	// Generate proof group
 	GroupPrime, err := safeprime.Generate(s.N.BitLen() + 2*rangeProofEpsilon + 10)
 	if err != nil {
@@ -136,7 +139,9 @@ func (s SafePrimeProofStructure) buildProof(Pprime *big.Int, Qprime *big.Int) Sa
 	var list []*big.Int
 	var PprimeIsPrimeCommit PrimeProofCommit
 	var QprimeIsPrimeCommit PrimeProofCommit
+	var QSPPcommit qspp.QuasiSafePrimeProductCommit
 	list = append(list, GroupPrime)
+	list = append(list, s.N)
 	list = PprimeSecret.GenerateCommitments(list)
 	list = QprimeSecret.GenerateCommitments(list)
 	list = PSecret.GenerateCommitments(list)
@@ -150,6 +155,7 @@ func (s SafePrimeProofStructure) buildProof(Pprime *big.Int, Qprime *big.Int) Sa
 	list = s.PQNRel.GenerateCommitmentsFromSecrets(g, list, &bases, &secrets)
 	list, PprimeIsPrimeCommit = s.PprimeIsPrime.GenerateCommitmentsFromSecrets(g, list, &bases, &secrets)
 	list, QprimeIsPrimeCommit = s.QprimeIsPrime.GenerateCommitmentsFromSecrets(g, list, &bases, &secrets)
+	list, QSPPcommit = qspp.QuasiSafePrimeProductBuildCommitments(list, Pprime, Qprime)
 
 	// Calculate challenge
 	challenge := common.HashCommit(list)
@@ -171,11 +177,12 @@ func (s SafePrimeProofStructure) buildProof(Pprime *big.Int, Qprime *big.Int) Sa
 	proof.Challenge = challenge
 	proof.PprimeIsPrimeProof = s.PprimeIsPrime.BuildProof(g, challenge, PprimeIsPrimeCommit, &secrets)
 	proof.QprimeIsPrimeProof = s.QprimeIsPrime.BuildProof(g, challenge, QprimeIsPrimeCommit, &secrets)
+	proof.QSPPproof = qspp.QuasiSafePrimeProductBuildProof(Pprime, Qprime, challenge, QSPPcommit)
 
 	return proof
 }
 
-func (s SafePrimeProofStructure) verifyProof(proof SafePrimeProof) bool {
+func (s SafePrimeProofStructure) VerifyProof(proof SafePrimeProof) bool {
 	// Check proof structure
 	if proof.GroupPrime == nil || proof.GroupPrime.BitLen() != s.N.BitLen()+2*rangeProofEpsilon+10 {
 		return false
@@ -194,6 +201,9 @@ func (s SafePrimeProofStructure) verifyProof(proof SafePrimeProof) bool {
 	}
 	if !s.PprimeIsPrime.VerifyProofStructure(proof.Challenge, proof.PprimeIsPrimeProof) ||
 		!s.QprimeIsPrime.VerifyProofStructure(proof.Challenge, proof.QprimeIsPrimeProof) {
+		return false
+	}
+	if !qspp.QuasiSafePrimeProductVerifyStructure(proof.QSPPproof) {
 		return false
 	}
 
@@ -216,6 +226,7 @@ func (s SafePrimeProofStructure) verifyProof(proof SafePrimeProof) bool {
 	// Build up commitment list
 	var list []*big.Int
 	list = append(list, proof.GroupPrime)
+	list = append(list, s.N)
 	list = proof.PprimeProof.GenerateCommitments(list)
 	list = proof.QprimeProof.GenerateCommitments(list)
 	list = proof.PProof.GenerateCommitments(list)
@@ -229,11 +240,13 @@ func (s SafePrimeProofStructure) verifyProof(proof SafePrimeProof) bool {
 	list = s.PQNRel.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs)
 	list = s.PprimeIsPrime.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs, proof.PprimeIsPrimeProof)
 	list = s.QprimeIsPrime.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs, proof.QprimeIsPrimeProof)
+	list = qspp.QuasiSafePrimeProductExtractCommitments(list, proof.QSPPproof)
 
 	// Check challenge
 	if proof.Challenge.Cmp(common.HashCommit(list)) != 0 {
 		return false
 	}
 
-	return true
+	// And the QSPP proof
+	return qspp.QuasiSafePrimeProductVerifyProof(s.N, proof.Challenge, proof.QSPPproof)
 }
