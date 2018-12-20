@@ -37,13 +37,13 @@ func SquareFreeVerifyStructure(proof SquareFreeProof) bool {
 	if proof.Responses == nil || len(proof.Responses) != squareFreeIters {
 		return false
 	}
-	
+
 	for _, val := range proof.Responses {
 		if val == nil {
 			return false
 		}
 	}
-	
+
 	return true
 }
 

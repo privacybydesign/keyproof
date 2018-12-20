@@ -51,21 +51,21 @@ func TestSquareFreeVerifyStructure(t *testing.T) {
 	const p = 1031
 	const q = 1063
 	proof := SquareFreeBuildProof(big.NewInt(int64(p*q)), big.NewInt(int64((p-1)*(q-1))), big.NewInt(12345), big.NewInt(0))
-	
+
 	listBackup := proof.Responses
 	proof.Responses = proof.Responses[:len(proof.Responses)-1]
 	if SquareFreeVerifyStructure(proof) {
 		t.Error("Accepting too short responses")
 	}
 	proof.Responses = listBackup
-	
+
 	valBackup := proof.Responses[2]
 	proof.Responses[2] = nil
 	if SquareFreeVerifyStructure(proof) {
 		t.Error("Accepting missing respone")
 	}
 	proof.Responses[2] = valBackup
-	
+
 	if !SquareFreeVerifyStructure(proof) {
 		t.Error("testcase corrupted testdata")
 	}

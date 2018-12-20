@@ -109,19 +109,19 @@ func AlmostSafePrimeProductVerifyStructure(proof AlmostSafePrimeProductProof) bo
 	if len(proof.Commitments) != almostSafePrimeProductIters || len(proof.Responses) != almostSafePrimeProductIters {
 		return false
 	}
-	
+
 	for _, val := range proof.Commitments {
 		if val == nil {
 			return false
 		}
 	}
-	
+
 	for _, val := range proof.Responses {
 		if val == nil {
 			return false
 		}
 	}
-	
+
 	return true
 }
 

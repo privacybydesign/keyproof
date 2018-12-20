@@ -53,13 +53,13 @@ func PrimePowerProductVerifyStructure(proof PrimePowerProductProof) bool {
 	if proof.Responses == nil || len(proof.Responses) != primePowerProductIters {
 		return false
 	}
-	
+
 	for _, val := range proof.Responses {
 		if val == nil {
 			return false
 		}
 	}
-	
+
 	return true
 }
 

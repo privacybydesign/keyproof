@@ -68,42 +68,42 @@ func TestAlmostSafePrimeProductVerifyStructure(t *testing.T) {
 	const q = 13901
 	_, commit := AlmostSafePrimeProductBuildCommitments([]*big.Int{}, big.NewInt(p), big.NewInt(q))
 	proof := AlmostSafePrimeProductBuildProof(big.NewInt(p), big.NewInt(q), big.NewInt(12345), big.NewInt(3), commit)
-	
+
 	listBackup := proof.Commitments
 	proof.Commitments = proof.Commitments[:len(proof.Commitments)-1]
 	if AlmostSafePrimeProductVerifyStructure(proof) {
 		t.Error("Accepiting too short commitments")
 	}
 	proof.Commitments = listBackup
-	
+
 	listBackup = proof.Responses
 	proof.Responses = proof.Responses[:len(proof.Responses)-1]
 	if AlmostSafePrimeProductVerifyStructure(proof) {
 		t.Error("Accepting too short responses")
 	}
 	proof.Responses = listBackup
-	
+
 	valBackup := proof.Commitments[2]
 	proof.Commitments[2] = nil
 	if AlmostSafePrimeProductVerifyStructure(proof) {
 		t.Error("Accepting missing commitment")
 	}
 	proof.Commitments[2] = valBackup
-	
+
 	valBackup = proof.Responses[3]
 	proof.Responses[3] = nil
 	if AlmostSafePrimeProductVerifyStructure(proof) {
 		t.Error("Accepting missing response")
 	}
 	proof.Responses[3] = valBackup
-	
+
 	valBackup = proof.Nonce
 	proof.Nonce = nil
 	if AlmostSafePrimeProductVerifyStructure(proof) {
 		t.Error("Accepting missing nonce")
 	}
 	proof.Nonce = valBackup
-	
+
 	if !AlmostSafePrimeProductVerifyStructure(proof) {
 		t.Error("Testing messed up testdata")
 	}

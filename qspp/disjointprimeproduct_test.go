@@ -52,21 +52,21 @@ func TestDisjointPrimeProductVerifyStructure(t *testing.T) {
 	const p = 2063
 	const q = 1187
 	proof := DisjointPrimeProductBuildProof(big.NewInt(p), big.NewInt(q), big.NewInt(12345), big.NewInt(2))
-	
+
 	listBackup := proof.Responses
 	proof.Responses = proof.Responses[:len(proof.Responses)-1]
 	if DisjointPrimeProductVerifyStructure(proof) {
 		t.Error("Accepting too short responses")
 	}
 	proof.Responses = listBackup
-	
+
 	valBackup := proof.Responses[2]
 	proof.Responses[2] = nil
 	if DisjointPrimeProductVerifyStructure(proof) {
 		t.Error("Accepting missing response")
 	}
 	proof.Responses[2] = valBackup
-	
+
 	if !DisjointPrimeProductVerifyStructure(proof) {
 		t.Error("Testcase corrupted testdata")
 	}

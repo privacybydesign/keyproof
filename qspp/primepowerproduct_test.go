@@ -52,21 +52,21 @@ func TestPrimePowerProductVerifyStructure(t *testing.T) {
 	const p = 1031
 	const q = 1061
 	proof := PrimePowerProductBuildProof(big.NewInt(int64(p)), big.NewInt(int64(q)), big.NewInt(12345), big.NewInt(1))
-	
+
 	listBackup := proof.Responses
 	proof.Responses = proof.Responses[:len(proof.Responses)-1]
 	if PrimePowerProductVerifyStructure(proof) {
 		t.Error("Accepting too short responses")
 	}
 	proof.Responses = listBackup
-	
+
 	valBackup := proof.Responses[2]
 	proof.Responses[2] = nil
 	if PrimePowerProductVerifyStructure(proof) {
 		t.Error("Accepting missing response")
 	}
 	proof.Responses[2] = valBackup
-	
+
 	if !PrimePowerProductVerifyStructure(proof) {
 		t.Error("testcase corrupted testdata")
 	}

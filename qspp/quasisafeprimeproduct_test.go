@@ -61,35 +61,35 @@ func TestQuasiSafePrimeProductVerifyStructure(t *testing.T) {
 	const q = 13901
 	_, commit := QuasiSafePrimeProductBuildCommitments([]*big.Int{}, big.NewInt(p), big.NewInt(q))
 	proof := QuasiSafePrimeProductBuildProof(big.NewInt(p), big.NewInt(q), big.NewInt(12345), commit)
-	
+
 	valBackup := proof.SFproof.Responses[2]
 	proof.SFproof.Responses[2] = nil
 	if QuasiSafePrimeProductVerifyStructure(proof) {
 		t.Error("Accepting corrupted sfproof")
 	}
 	proof.SFproof.Responses[2] = valBackup
-	
+
 	valBackup = proof.PPPproof.Responses[2]
 	proof.PPPproof.Responses[2] = nil
 	if QuasiSafePrimeProductVerifyStructure(proof) {
 		t.Error("Accepting corrupted pppproof")
 	}
 	proof.PPPproof.Responses[2] = valBackup
-	
+
 	valBackup = proof.DPPproof.Responses[2]
 	proof.DPPproof.Responses[2] = nil
 	if QuasiSafePrimeProductVerifyStructure(proof) {
 		t.Error("Accepting corrupted dppproof")
 	}
 	proof.DPPproof.Responses[2] = valBackup
-	
+
 	valBackup = proof.ASPPproof.Responses[2]
 	proof.ASPPproof.Responses[2] = nil
 	if QuasiSafePrimeProductVerifyStructure(proof) {
 		t.Error("Accepting corrupted asppproof")
 	}
 	proof.ASPPproof.Responses[2] = valBackup
-	
+
 	if !QuasiSafePrimeProductVerifyStructure(proof) {
 		t.Error("testcase corrupted testdata")
 	}
