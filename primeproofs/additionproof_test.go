@@ -1,12 +1,14 @@
 package primeproofs
 
 import "testing"
+import "encoding/json"
 import "github.com/mhe/gabi/big"
 
 func TestAdditionProofFlow(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for Addition proof testing")
+		return
 	}
 
 	const a = 4
@@ -42,11 +44,13 @@ func TestAdditionProofFlow(t *testing.T) {
 	basesProof := newBaseMerge(&g, &a1proof, &a2proof, &modproof, &resultproof)
 	proofdata := newProofMerge(&a1proof, &a2proof, &modproof, &resultproof)
 
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &proofdata, proof)
-
 	if !s.VerifyProofStructure(proof) {
 		t.Error("Proof structure marked as invalid.\n")
+		return
 	}
+
+	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &proofdata, proof)
+
 	if !listCmp(listSecrets, listProof) {
 		t.Error("Commitment lists differ.\n")
 	}
@@ -56,6 +60,7 @@ func TestAdditionProofVerifyStructure(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for Multiplication proof testing")
+		return
 	}
 
 	var proof AdditionProof
@@ -84,6 +89,7 @@ func TestAdditionProofFake(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for Multiplication proof testing")
+		return
 	}
 
 	s := newAdditionProofStructure("a1", "a2", "mod", "result", 3)
@@ -92,5 +98,34 @@ func TestAdditionProofFake(t *testing.T) {
 
 	if !s.VerifyProofStructure(proof) {
 		t.Error("Rejecting fake proof structure.\n")
+	}
+}
+
+func TestAdditionProofJSON(t *testing.T) {
+	g, gok := buildGroup(big.NewInt(47))
+	if !gok {
+		t.Error("Failed to setup group for Multiplication proof testing")
+		return
+	}
+
+	s := newAdditionProofStructure("a1", "a2", "mod", "result", 3)
+
+	proofBefore := s.FakeProof(g)
+
+	proofJSON, err := json.Marshal(proofBefore)
+	if err != nil {
+		t.Errorf("error during json marshal: %s", err.Error())
+		return
+	}
+
+	var proofAfter AdditionProof
+	err = json.Unmarshal(proofJSON, &proofAfter)
+	if err != nil {
+		t.Errorf("error during json unmarshal: %s", err.Error())
+		return
+	}
+
+	if !s.VerifyProofStructure(proofAfter) {
+		t.Error("json'ed proof structure invalid")
 	}
 }

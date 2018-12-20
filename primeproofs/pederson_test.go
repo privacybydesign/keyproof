@@ -1,6 +1,7 @@
 package primeproofs
 
 import "testing"
+import "encoding/json"
 import "github.com/mhe/gabi/big"
 
 func TestPedersonSecret(t *testing.T) {
@@ -152,5 +153,31 @@ func TestPedersonProofFake(t *testing.T) {
 	ok := proof.VerifyStructure()
 	if !ok {
 		t.Error("Fake proof structure rejected")
+	}
+}
+
+func TestPedersonProofJSON(t *testing.T) {
+	g, gok := buildGroup(big.NewInt(47))
+	if !gok {
+		t.Error("Failed to setup group for Representation proof testing")
+		return
+	}
+
+	proofBefore := newPedersonFakeProof(g)
+	proofJSON, err := json.Marshal(proofBefore)
+	if err != nil {
+		t.Errorf("error during json marshal: %s", proofBefore)
+		return
+	}
+
+	var proofAfter PedersonProof
+	err = json.Unmarshal(proofJSON, &proofAfter)
+	if err != nil {
+		t.Errorf("error during json unmarshal: %s", proofAfter)
+		return
+	}
+
+	if !proofAfter.VerifyStructure() {
+		t.Error("json'ed proof structure rejected")
 	}
 }

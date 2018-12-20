@@ -7,6 +7,7 @@ func TestGroupWithSafePrime(t *testing.T) {
 	group, ok := buildGroup(big.NewInt(26903))
 	if !ok {
 		t.Error("Failed to recognize safeprime")
+		return
 	}
 	if group.P == nil {
 		t.Error("Missing group P")

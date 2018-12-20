@@ -1,12 +1,14 @@
 package primeproofs
 
 import "testing"
+import "encoding/json"
 import "github.com/mhe/gabi/big"
 
 func TestExpStepFlowA(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for expStep proof testing")
+		return
 	}
 
 	bitPederson := newPedersonSecret(g, "bit", big.NewInt(0))
@@ -29,6 +31,7 @@ func TestExpStepFlowA(t *testing.T) {
 
 	if !s.VerifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Proof structure rejected")
+		return
 	}
 
 	bitProof := bitPederson.BuildProof(g, big.NewInt(12345))
@@ -77,6 +80,7 @@ func TestExpStepFlowB(t *testing.T) {
 
 	if !s.VerifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Proof structure rejected")
+		return
 	}
 
 	bitProof := bitPederson.BuildProof(g, big.NewInt(12345))
@@ -103,6 +107,7 @@ func TestExpStepFake(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for expStep proof testing")
+		return
 	}
 
 	s := newExpStepStructure("bit", "pre", "post", "mul", "mod", 4)
@@ -114,10 +119,39 @@ func TestExpStepFake(t *testing.T) {
 	}
 }
 
+func TestExpStepJSON(t *testing.T) {
+	g, gok := buildGroup(big.NewInt(47))
+	if !gok {
+		t.Error("Failed to setup group for expStep proof testing")
+		return
+	}
+
+	s := newExpStepStructure("bit", "pre", "post", "mul", "mod", 4)
+
+	proofBefore := s.FakeProof(g, big.NewInt(12345))
+	proofJSON, err := json.Marshal(proofBefore)
+	if err != nil {
+		t.Errorf("error during json marshal: %s", err.Error())
+		return
+	}
+
+	var proofAfter expStepProof
+	err = json.Unmarshal(proofJSON, &proofAfter)
+	if err != nil {
+		t.Errorf("error during json unmarshal: %s", err.Error())
+		return
+	}
+
+	if !s.VerifyProofStructure(big.NewInt(12345), proofAfter) {
+		t.Error("json'ed proof structure rejected")
+	}
+}
+
 func TestExpStepVerifyProofStructure(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for expStep proof testing")
+		return
 	}
 
 	s := newExpStepStructure("bit", "pre", "post", "mul", "mod", 4)

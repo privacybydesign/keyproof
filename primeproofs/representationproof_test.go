@@ -52,6 +52,7 @@ func TestRepresentationProofBasics(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for Representation proof testing")
+		return
 	}
 
 	var s RepresentationProofStructure
@@ -96,6 +97,7 @@ func TestRepresentationProofComplex(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for Representation proof testing")
+		return
 	}
 
 	var s RepresentationProofStructure

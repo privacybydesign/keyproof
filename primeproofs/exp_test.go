@@ -2,7 +2,7 @@ package primeproofs
 
 import "github.com/mhe/gabi/big"
 import "testing"
-import "fmt"
+import "encoding/json"
 
 func TestExpProofFlow(t *testing.T) {
 	const a = 2
@@ -13,6 +13,7 @@ func TestExpProofFlow(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for exp proof testing")
+		return
 	}
 
 	aPederson := newPedersonSecret(g, "a", big.NewInt(a))
@@ -34,6 +35,7 @@ func TestExpProofFlow(t *testing.T) {
 
 	if !s.VerifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("proof structure rejected")
+		return
 	}
 
 	aProof := aPederson.BuildProof(g, big.NewInt(12345))
@@ -51,8 +53,6 @@ func TestExpProofFlow(t *testing.T) {
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, &proofs, proof)
 
 	if !listCmp(listSecrets, listProof) {
-		fmt.Printf("%v\n%v\n", listSecrets, listProof)
-		fmt.Printf("%v %v\n", len(listSecrets), len(listProof))
 		t.Error("Commitment lists differ")
 	}
 }
@@ -61,6 +61,7 @@ func TestExpProofFake(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for exp proof testing")
+		return
 	}
 
 	s := newExpProofStructure("a", "b", "n", "r", 4)
@@ -71,10 +72,39 @@ func TestExpProofFake(t *testing.T) {
 	}
 }
 
+func TestExpProofJSON(t *testing.T) {
+	g, gok := buildGroup(big.NewInt(47))
+	if !gok {
+		t.Error("Failed to setup group for exp proof testing")
+		return
+	}
+
+	s := newExpProofStructure("a", "b", "n", "r", 4)
+
+	proofBefore := s.FakeProof(g, big.NewInt(12345))
+	proofJSON, err := json.Marshal(proofBefore)
+	if err != nil {
+		t.Errorf("error during json marshal: %s", err.Error())
+		return
+	}
+
+	var proofAfter expProof
+	err = json.Unmarshal(proofJSON, &proofAfter)
+	if err != nil {
+		t.Errorf("error during json unmarshal: %s", err.Error())
+		return
+	}
+
+	if !s.VerifyProofStructure(big.NewInt(12345), proofAfter) {
+		t.Error("json'ed proof structure rejected")
+	}
+}
+
 func TestExpProofVerifyStructure(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for exp proof testing")
+		return
 	}
 
 	s := newExpProofStructure("a", "b", "n", "r", 4)

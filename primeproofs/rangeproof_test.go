@@ -1,6 +1,7 @@
 package primeproofs
 
 import "testing"
+import "encoding/json"
 import "github.com/mhe/gabi/big"
 
 type RangeTestSecret struct {
@@ -52,6 +53,7 @@ func TestRangeProofBasic(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for Range proof testing")
+		return
 	}
 
 	var s RangeProofStructure
@@ -78,16 +80,20 @@ func TestRangeProofBasic(t *testing.T) {
 
 	bases := newBaseMerge(&g, &commit)
 
-	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
-	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
-
 	if !s.IsTrue(g, &bases, &secret) {
 		t.Error("Statement incorrectly declared false")
 	}
+
+	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
+
 	if !s.VerifyProofStructure(proof) {
 		t.Error("Proof structure rejected")
+		return
 	}
+
+	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
+
 	if !listCmp(listSecret, listProof) {
 		t.Error("Commitment lists disagree")
 	}
@@ -97,6 +103,7 @@ func TestRangeProofComplex(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for Range proof testing")
+		return
 	}
 	var s RangeProofStructure
 	s.Lhs = []LhsContribution{
@@ -127,16 +134,20 @@ func TestRangeProofComplex(t *testing.T) {
 
 	bases := newBaseMerge(&g, &commit)
 
-	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
-	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
-
 	if !s.IsTrue(g, &bases, &secret) {
 		t.Error("Statement incorrectly declared false")
 	}
+
+	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
+
 	if !s.VerifyProofStructure(proof) {
 		t.Error("Proof structure rejected")
+		return
 	}
+
+	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
+
 	if !listCmp(listSecret, listProof) {
 		t.Error("Commitment lists disagree")
 	}
@@ -262,6 +273,7 @@ func TestRangeProofFake(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for Range proof testing")
+		return
 	}
 
 	var s RangeProofStructure
@@ -278,5 +290,42 @@ func TestRangeProofFake(t *testing.T) {
 	proof := s.FakeProof(g)
 	if !s.VerifyProofStructure(proof) {
 		t.Error("Fake proof structure rejected.")
+	}
+}
+
+func TestRangeProofJSON(t *testing.T) {
+	g, gok := buildGroup(big.NewInt(47))
+	if !gok {
+		t.Error("Failed to setup group for Range proof testing")
+		return
+	}
+
+	var s RangeProofStructure
+	s.Lhs = []LhsContribution{
+		LhsContribution{"c", big.NewInt(1)},
+	}
+	s.Rhs = []RhsContribution{
+		RhsContribution{"g", "x", 1},
+		RhsContribution{"h", "xh", 1},
+	}
+	s.l1 = 3
+	s.l2 = 2
+
+	proofBefore := s.FakeProof(g)
+	proofJSON, err := json.Marshal(proofBefore)
+	if err != nil {
+		t.Errorf("error during json marshal: %s", err.Error())
+		return
+	}
+
+	var proofAfter RangeProof
+	err = json.Unmarshal(proofJSON, &proofAfter)
+	if err != nil {
+		t.Errorf("error during json unmarshal: %s", err.Error())
+		return
+	}
+
+	if !s.VerifyProofStructure(proofAfter) {
+		t.Error("json'ed proof structure rejected")
 	}
 }

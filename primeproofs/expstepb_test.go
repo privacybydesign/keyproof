@@ -1,12 +1,14 @@
 package primeproofs
 
 import "testing"
+import "encoding/json"
 import "github.com/mhe/gabi/big"
 
 func TestExpStepBFlow(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for expStepB proof testing")
+		return
 	}
 
 	bitPederson := newPedersonSecret(g, "bit", big.NewInt(1))
@@ -29,6 +31,7 @@ func TestExpStepBFlow(t *testing.T) {
 
 	if !s.VerifyProofStructure(proof) {
 		t.Error("Proof structure rejected")
+		return
 	}
 
 	bitProof := bitPederson.BuildProof(g, big.NewInt(12345))
@@ -55,6 +58,7 @@ func TestExpStepBFake(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for expStepB proof testing")
+		return
 	}
 
 	s := newExpStepBStructure("bit", "pre", "post", "mul", "mod", 4)
@@ -65,10 +69,40 @@ func TestExpStepBFake(t *testing.T) {
 	}
 }
 
+func TestExpStepBJSON(t *testing.T) {
+	g, gok := buildGroup(big.NewInt(47))
+	if !gok {
+		t.Error("Failed to setup group for expStepB proof testing")
+		return
+	}
+
+	s := newExpStepBStructure("bit", "pre", "post", "mul", "mod", 4)
+
+	proofBefore := s.FakeProof(g)
+	proofJSON, err := json.Marshal(proofBefore)
+
+	if err != nil {
+		t.Errorf("error during json marshal: %s", err.Error())
+		return
+	}
+
+	var proofAfter expStepBProof
+	err = json.Unmarshal(proofJSON, &proofAfter)
+
+	if err != nil {
+		t.Errorf("error during json unmarshal: %s", err.Error())
+		return
+	}
+	if !s.VerifyProofStructure(proofAfter) {
+		t.Error("json'ed proof structure rejected")
+	}
+}
+
 func TestExpStepBVerifyStructure(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
 		t.Error("Failed to setup group for expStepB proof testing")
+		return
 	}
 
 	s := newExpStepBStructure("bit", "pre", "post", "mul", "mod", 4)
