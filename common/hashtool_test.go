@@ -4,7 +4,7 @@ import "testing"
 import "github.com/mhe/gabi/big"
 
 func TestHashCommit(t *testing.T) {
-	listA := []*big.Int {
+	listA := []*big.Int{
 		big.NewInt(1),
 		big.NewInt(2),
 		big.NewInt(3),
@@ -14,8 +14,8 @@ func TestHashCommit(t *testing.T) {
 		t.Error("Failed to generate hash for A")
 		return
 	}
-	
-	listB := []*big.Int {
+
+	listB := []*big.Int{
 		big.NewInt(1),
 		nil,
 		big.NewInt(3),
@@ -25,8 +25,8 @@ func TestHashCommit(t *testing.T) {
 		t.Error("Failed to generate hash for B")
 		return
 	}
-	
-	listC := []*big.Int {
+
+	listC := []*big.Int{
 		big.NewInt(1),
 		big.NewInt(2),
 	}
@@ -35,7 +35,7 @@ func TestHashCommit(t *testing.T) {
 		t.Error("Failed to generate hash for C")
 		return
 	}
-	
+
 	if hashA.Cmp(hashB) == 0 {
 		t.Error("Hashes for A and B coincide")
 	}
@@ -48,7 +48,7 @@ func TestHashCommit(t *testing.T) {
 }
 
 func TestGetHashNumber(t *testing.T) {
-	list := []*big.Int {
+	list := []*big.Int{
 		GetHashNumber(nil, nil, 0, 10),
 		GetHashNumber(big.NewInt(1), nil, 0, 10),
 		GetHashNumber(big.NewInt(2), nil, 0, 10),
@@ -57,7 +57,7 @@ func TestGetHashNumber(t *testing.T) {
 		GetHashNumber(big.NewInt(1), big.NewInt(3), 0, 10),
 		GetHashNumber(big.NewInt(1), big.NewInt(2), 1, 10),
 	}
-	
+
 	for i, vi := range list {
 		for j, vj := range list {
 			if i != j {
@@ -67,7 +67,7 @@ func TestGetHashNumber(t *testing.T) {
 			}
 		}
 	}
-	
+
 	A := GetHashNumber(nil, nil, 0, 10)
 	B := GetHashNumber(nil, nil, 0, 1000)
 	C := GetHashNumber(nil, nil, 0, 10000)
