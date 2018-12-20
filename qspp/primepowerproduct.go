@@ -1,5 +1,6 @@
 package qspp
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 
 type PrimePowerProductProof struct {
@@ -20,17 +21,17 @@ func PrimePowerProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, ind
 	proof.Responses = []*big.Int{}
 	for i := 0; i < primePowerProductIters; i++ {
 		// Generate the challenge
-		curc := getHashNumber(challenge, index, i, N.BitLen())
+		curc := common.GetHashNumber(challenge, index, i, uint(N.BitLen()))
 		curc.Mod(curc, N)
 
 		if new(big.Int).GCD(nil, nil, curc, N).Cmp(big.NewInt(1)) != 0 {
 			panic("Generated number not in Z_N")
 		}
 
-		r1, ok1 := modSqrt(curc, factors)
-		r2, ok2 := modSqrt(new(big.Int).Mod(new(big.Int).Neg(curc), N), factors)
-		r3, ok3 := modSqrt(new(big.Int).Mod(new(big.Int).Lsh(curc, 1), N), factors)
-		r4, ok4 := modSqrt(new(big.Int).Mod(new(big.Int).Lsh(new(big.Int).Mod(new(big.Int).Neg(curc), N), 1), N), factors)
+		r1, ok1 := common.ModSqrt(curc, factors)
+		r2, ok2 := common.ModSqrt(new(big.Int).Mod(new(big.Int).Neg(curc), N), factors)
+		r3, ok3 := common.ModSqrt(new(big.Int).Mod(new(big.Int).Lsh(curc, 1), N), factors)
+		r4, ok4 := common.ModSqrt(new(big.Int).Mod(new(big.Int).Lsh(new(big.Int).Mod(new(big.Int).Neg(curc), N), 1), N), factors)
 
 		if ok1 {
 			proof.Responses = append(proof.Responses, r1)
@@ -66,7 +67,7 @@ func PrimePowerProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int
 	// Generate the challenges and responses
 	for i := 0; i < primePowerProductIters; i++ {
 		// Generate the challenge
-		curc := getHashNumber(challenge, index, i, N.BitLen())
+		curc := common.GetHashNumber(challenge, index, i, uint(N.BitLen()))
 		curc.Mod(curc, N)
 
 		// Process response

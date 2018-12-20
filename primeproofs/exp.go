@@ -1,5 +1,6 @@
 package primeproofs
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 import "strings"
 import "fmt"
@@ -236,7 +237,7 @@ func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 	// exponent bits
 	commit.nameBitEqHider = strings.Join([]string{s.myname, "biteqhider"}, "_")
 	commit.expBitEqHider = new(big.Int).Neg(secretdata.GetSecret(strings.Join([]string{s.exponent, "hider"}, "_")))
-	commit.expBitEqHiderRandomizer = randomBigInt(g.order)
+	commit.expBitEqHiderRandomizer = common.RandomBigInt(g.order)
 	commit.expBitPederson = []PedersonSecret{}
 	for i := uint(0); i < s.bitlen; i++ {
 		commit.expBitPederson = append(
@@ -463,7 +464,7 @@ func (s *expProofStructure) BuildProof(g group, challenge *big.Int, commit expPr
 func (s *expProofStructure) FakeProof(g group, challenge *big.Int) expProof {
 	var proof expProof
 
-	proof.ExpBitEqResult = randomBigInt(g.order)
+	proof.ExpBitEqResult = common.RandomBigInt(g.order)
 	proof.ExpBitProofs = []PedersonProof{}
 	for i := uint(0); i < s.bitlen; i++ {
 		proof.ExpBitProofs = append(proof.ExpBitProofs, newPedersonFakeProof(g))

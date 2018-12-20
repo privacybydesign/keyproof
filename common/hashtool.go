@@ -1,11 +1,11 @@
-package primeproofs
+package common
 
 import "crypto/sha256"
 import "encoding/asn1"
 import "github.com/mhe/gabi/big"
 import gobig "math/big"
 
-func hashCommit(values []*big.Int) *big.Int {
+func HashCommit(values []*big.Int) *big.Int {
 	// The first element is the number of elements
 	var tmp []interface{}
 	offset := 0
@@ -22,7 +22,7 @@ func hashCommit(values []*big.Int) *big.Int {
 	return new(big.Int).SetBytes(h.Sum(nil))
 }
 
-func getHashNumber(a *big.Int, b *big.Int, index int, bitlen uint) *big.Int {
+func GetHashNumber(a *big.Int, b *big.Int, index int, bitlen uint) *big.Int {
 	tmp := []*big.Int{}
 	if a != nil {
 		tmp = append(tmp, a)
@@ -37,7 +37,7 @@ func getHashNumber(a *big.Int, b *big.Int, index int, bitlen uint) *big.Int {
 	k := uint(0)
 	res := big.NewInt(0)
 	for k < bitlen {
-		cur := hashCommit(tmp)
+		cur := HashCommit(tmp)
 		cur.Lsh(cur, uint(k))
 		res.Add(res, cur)
 		k += 256

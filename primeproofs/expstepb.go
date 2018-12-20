@@ -1,5 +1,6 @@
 package primeproofs
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 import "strings"
 
@@ -88,9 +89,9 @@ func (s *expStepBStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 	commit.bitname = strings.Join([]string{s.bitname, "hider"}, "_")
 	commit.mulname = s.mulname
 	commit.mulhidername = strings.Join([]string{s.mulname, "hider"}, "_")
-	commit.MulRandomizer = randomBigInt(g.order)
-	commit.MulHiderRandomizer = randomBigInt(g.order)
-	commit.BitHiderRandomizer = randomBigInt(g.order)
+	commit.MulRandomizer = common.RandomBigInt(g.order)
+	commit.MulHiderRandomizer = common.RandomBigInt(g.order)
+	commit.BitHiderRandomizer = common.RandomBigInt(g.order)
 
 	// Inner secrets
 	secrets := newSecretMerge(&commit, secretdata)
@@ -136,9 +137,9 @@ func (s *expStepBStructure) BuildProof(g group, challenge *big.Int, commit expSt
 
 func (s *expStepBStructure) FakeProof(g group) expStepBProof {
 	var proof expStepBProof
-	proof.MulResult = randomBigInt(g.order)
-	proof.MulHiderResult = randomBigInt(g.order)
-	proof.BitHiderResult = randomBigInt(g.order)
+	proof.MulResult = common.RandomBigInt(g.order)
+	proof.MulHiderResult = common.RandomBigInt(g.order)
+	proof.BitHiderResult = common.RandomBigInt(g.order)
 	proof.MultiplicationProof = s.prePostMul.FakeProof(g)
 	return proof
 }

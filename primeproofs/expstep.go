@@ -1,5 +1,6 @@
 package primeproofs
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 
 type expStepStructure struct {
@@ -46,14 +47,14 @@ func (s *expStepStructure) GenerateCommitmentsFromSecrets(g group, list []*big.I
 		list, commit.Acommit = s.stepa.GenerateCommitmentsFromSecrets(g, list, bases, secretdata)
 
 		// fake b
-		commit.Bchallenge = randomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
+		commit.Bchallenge = common.RandomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
 		commit.Bproof = s.stepb.FakeProof(g)
 		list = s.stepb.GenerateCommitmentsFromProof(g, list, commit.Bchallenge, bases, commit.Bproof)
 	} else {
 		commit.isTypeA = false
 
 		// fake a
-		commit.Achallenge = randomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
+		commit.Achallenge = common.RandomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
 		commit.Aproof = s.stepa.FakeProof(g)
 		list = s.stepa.GenerateCommitmentsFromProof(g, list, commit.Achallenge, bases, commit.Aproof)
 
@@ -91,7 +92,7 @@ func (s *expStepStructure) BuildProof(g group, challenge *big.Int, commit expSte
 func (s *expStepStructure) FakeProof(g group, challenge *big.Int) expStepProof {
 	var proof expStepProof
 
-	proof.Achallenge = randomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
+	proof.Achallenge = common.RandomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
 	proof.Bchallenge = new(big.Int).Xor(challenge, proof.Achallenge)
 	proof.Aproof = s.stepa.FakeProof(g)
 	proof.Bproof = s.stepb.FakeProof(g)

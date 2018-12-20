@@ -1,5 +1,6 @@
 package primeproofs
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 import "strings"
 
@@ -53,9 +54,9 @@ func newPedersonSecret(g group, name string, value *big.Int) PedersonSecret {
 	result.name = name
 	result.hname = strings.Join([]string{name, "hider"}, "_")
 	result.secret = new(big.Int).Set(value)
-	result.secretRandomizer = randomBigInt(g.order)
-	result.hider = randomBigInt(g.order)
-	result.hiderRandomizer = randomBigInt(g.order)
+	result.secretRandomizer = common.RandomBigInt(g.order)
+	result.hider = common.RandomBigInt(g.order)
+	result.hiderRandomizer = common.RandomBigInt(g.order)
 	result.commit = new(big.Int).Mod(
 		new(big.Int).Mul(
 			new(big.Int).Exp(g.g, result.secret, g.P),
@@ -68,11 +69,11 @@ func newPedersonFakeProof(g group) PedersonProof {
 	var result PedersonProof
 	result.Commit = new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(g.g, randomBigInt(g.order), g.P),
-			new(big.Int).Exp(g.h, randomBigInt(g.order), g.P)),
+			new(big.Int).Exp(g.g, common.RandomBigInt(g.order), g.P),
+			new(big.Int).Exp(g.h, common.RandomBigInt(g.order), g.P)),
 		g.P)
-	result.Sresult = randomBigInt(g.order)
-	result.Hresult = randomBigInt(g.order)
+	result.Sresult = common.RandomBigInt(g.order)
+	result.Hresult = common.RandomBigInt(g.order)
 	return result
 }
 

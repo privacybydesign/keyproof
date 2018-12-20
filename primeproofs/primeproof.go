@@ -1,5 +1,6 @@
 package primeproofs
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 import "strings"
 
@@ -221,10 +222,10 @@ func (s *PrimeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*bi
 	commit.namePreaHider = strings.Join([]string{s.myname, "preahider"}, "_")
 
 	// Build prea
-	commit.preaPederson = newPedersonSecret(g, strings.Join([]string{s.myname, "prea"}, "_"), randomBigInt(secretdata.GetSecret(s.primeName)))
+	commit.preaPederson = newPedersonSecret(g, strings.Join([]string{s.myname, "prea"}, "_"), common.RandomBigInt(secretdata.GetSecret(s.primeName)))
 
 	// Calculate aAdd, a, and d
-	aAdd := getHashNumber(commit.preaPederson.commit, nil, 0, s.bitlen)
+	aAdd := common.GetHashNumber(commit.preaPederson.commit, nil, 0, s.bitlen)
 	d, a := new(big.Int).DivMod(
 		new(big.Int).Add(
 			commit.preaPederson.secret,
@@ -240,7 +241,7 @@ func (s *PrimeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*bi
 	// Generate a related commitments
 	commit.aPederson = newPedersonSecret(g, strings.Join([]string{s.myname, "a"}, "_"), a)
 	commit.preaMod = d
-	commit.preaModRandomizer = randomBigInt(g.order)
+	commit.preaModRandomizer = common.RandomBigInt(g.order)
 	commit.preaHider = new(big.Int).Mod(
 		new(big.Int).Sub(
 			commit.preaPederson.hider,
@@ -250,13 +251,13 @@ func (s *PrimeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*bi
 					d,
 					secretdata.GetSecret(strings.Join([]string{s.primeName, "hider"}, "_"))))),
 		g.order)
-	commit.preaHiderRandomizer = randomBigInt(g.order)
+	commit.preaHiderRandomizer = common.RandomBigInt(g.order)
 
 	// Find aneg
-	aneg := randomBigInt(secretdata.GetSecret(s.primeName))
+	aneg := common.RandomBigInt(secretdata.GetSecret(s.primeName))
 	anegPow := new(big.Int).Exp(aneg, new(big.Int).Rsh(secretdata.GetSecret(s.primeName), 1), secretdata.GetSecret(s.primeName))
 	for anegPow.Cmp(new(big.Int).Sub(secretdata.GetSecret(s.primeName), big.NewInt(1))) != 0 {
-		aneg.Set(randomBigInt(secretdata.GetSecret(s.primeName)))
+		aneg.Set(common.RandomBigInt(secretdata.GetSecret(s.primeName)))
 		anegPow.Exp(aneg, new(big.Int).Rsh(secretdata.GetSecret(s.primeName), 1), secretdata.GetSecret(s.primeName))
 	}
 
@@ -272,10 +273,10 @@ func (s *PrimeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*bi
 	anegRes.Sub(anegRes, secretdata.GetSecret(s.primeName))
 	commit.aResPederson = newPedersonSecret(g, strings.Join([]string{s.myname, "ares"}, "_"), aRes)
 	commit.anegResPederson = newPedersonSecret(g, strings.Join([]string{s.myname, "anegres"}, "_"), anegRes)
-	commit.aInvalidResult = randomBigInt(g.order)
-	commit.aInvalidChallenge = randomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
+	commit.aInvalidResult = common.RandomBigInt(g.order)
+	commit.aInvalidChallenge = common.RandomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
 	commit.aValid = commit.aResPederson.hider
-	commit.aValidRandomizer = randomBigInt(g.order)
+	commit.aValidRandomizer = common.RandomBigInt(g.order)
 	if aRes.Cmp(big.NewInt(1)) == 0 {
 		commit.nameAValid = strings.Join([]string{s.myname, "aresplus1hider"}, "_")
 		commit.nameAInvalid = strings.Join([]string{s.myname, "aresmin1hider"}, "_")
@@ -347,7 +348,7 @@ func (s *PrimeProofStructure) BuildProof(g group, challenge *big.Int, commit Pri
 	var proof PrimeProof
 
 	// Rebuild structure for the a generation proofs
-	aAdd := getHashNumber(commit.preaPederson.commit, nil, 0, s.bitlen)
+	aAdd := common.GetHashNumber(commit.preaPederson.commit, nil, 0, s.bitlen)
 	agenproof := RepresentationProofStructure{
 		[]LhsContribution{
 			LhsContribution{commit.preaPederson.name, big.NewInt(1)},
@@ -443,7 +444,7 @@ func (s *PrimeProofStructure) FakeProof(g group, challenge *big.Int) PrimeProof 
 	proof.AnegResCommit = newPedersonFakeProof(g)
 
 	// Build the fake proof structure for the preaMod rangeproof
-	aAdd := getHashNumber(proof.PreaCommit.Commit, nil, 0, s.bitlen)
+	aAdd := common.GetHashNumber(proof.PreaCommit.Commit, nil, 0, s.bitlen)
 	agenproof := RepresentationProofStructure{
 		[]LhsContribution{
 			LhsContribution{strings.Join([]string{s.myname, "prea"}, "_"), big.NewInt(1)},
@@ -469,11 +470,11 @@ func (s *PrimeProofStructure) FakeProof(g group, challenge *big.Int) PrimeProof 
 	proof.PreaModRangeProof = agenrange.FakeProof(g)
 
 	// And fake our bits
-	proof.PreaModResult = randomBigInt(g.order)
-	proof.PreaHiderResult = randomBigInt(g.order)
-	proof.APlus1Result = randomBigInt(g.order)
-	proof.AMin1Result = randomBigInt(g.order)
-	proof.APlus1Challenge = randomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
+	proof.PreaModResult = common.RandomBigInt(g.order)
+	proof.PreaHiderResult = common.RandomBigInt(g.order)
+	proof.APlus1Result = common.RandomBigInt(g.order)
+	proof.AMin1Result = common.RandomBigInt(g.order)
+	proof.APlus1Challenge = common.RandomBigInt(new(big.Int).Lsh(big.NewInt(1), 256))
 	proof.AMin1Challenge = new(big.Int).Xor(challenge, proof.APlus1Challenge)
 
 	proof.AExpProof = s.aExp.FakeProof(g, challenge)
@@ -494,7 +495,7 @@ func (s *PrimeProofStructure) VerifyProofStructure(challenge *big.Int, proof Pri
 	}
 
 	// Build the proof structure for the preaMod rangeproof
-	aAdd := getHashNumber(proof.PreaCommit.Commit, nil, 0, s.bitlen)
+	aAdd := common.GetHashNumber(proof.PreaCommit.Commit, nil, 0, s.bitlen)
 	agenproof := RepresentationProofStructure{
 		[]LhsContribution{
 			LhsContribution{strings.Join([]string{s.myname, "prea"}, "_"), big.NewInt(1)},
@@ -557,7 +558,7 @@ func (s *PrimeProofStructure) GenerateCommitmentsFromProof(g group, list []*big.
 	proof.AnegResCommit.SetName(strings.Join([]string{s.myname, "anegres"}, "_"))
 
 	// Build the proof structure for the preamod proofs
-	aAdd := getHashNumber(proof.PreaCommit.Commit, nil, 0, s.bitlen)
+	aAdd := common.GetHashNumber(proof.PreaCommit.Commit, nil, 0, s.bitlen)
 	agenproof := RepresentationProofStructure{
 		[]LhsContribution{
 			LhsContribution{strings.Join([]string{s.myname, "prea"}, "_"), big.NewInt(1)},

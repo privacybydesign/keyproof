@@ -1,4 +1,4 @@
-package qspp
+package common
 
 import "testing"
 import "github.com/mhe/gabi/big"
@@ -20,8 +20,8 @@ func TestLegendre(t *testing.T) {
 			if rv > 1 {
 				rv -= prime.Int64()
 			}
-			if rv != int64(legendreSymbol(big.NewInt(int64(i)), prime)) {
-				t.Errorf("Incorrect result %v for input (%v, %v) (ref: %v)", legendreSymbol(big.NewInt(int64(i)), prime), i, prime, ref)
+			if rv != int64(LegendreSymbol(big.NewInt(int64(i)), prime)) {
+				t.Errorf("Incorrect result %v for input (%v, %v) (ref: %v)", LegendreSymbol(big.NewInt(int64(i)), prime), i, prime, ref)
 			}
 		}
 	}
@@ -29,16 +29,16 @@ func TestLegendre(t *testing.T) {
 
 func TestCrt20(t *testing.T) {
 	for i := 0; i < 20; i++ {
-		if crt(big.NewInt(int64(i%4)), big.NewInt(4), big.NewInt(int64(i%5)), big.NewInt(5)).Cmp(big.NewInt(int64(i))) != 0 {
-			t.Errorf("Incorrect reconstruction %d of %d.", crt(big.NewInt(int64(i%4)), big.NewInt(4), big.NewInt(int64(i%5)), big.NewInt(5)).Int64(), i)
+		if Crt(big.NewInt(int64(i%4)), big.NewInt(4), big.NewInt(int64(i%5)), big.NewInt(5)).Cmp(big.NewInt(int64(i))) != 0 {
+			t.Errorf("Incorrect reconstruction %d of %d.", Crt(big.NewInt(int64(i%4)), big.NewInt(4), big.NewInt(int64(i%5)), big.NewInt(5)).Int64(), i)
 		}
 	}
 }
 
 func TestCrt35(t *testing.T) {
 	for i := 0; i < 35; i++ {
-		if crt(big.NewInt(int64(i%5)), big.NewInt(5), big.NewInt(int64(i%7)), big.NewInt(7)).Cmp(big.NewInt(int64(i))) != 0 {
-			t.Errorf("Incorrect reconstruction %d of %d.", crt(big.NewInt(int64(i%5)), big.NewInt(5), big.NewInt(int64(i%7)), big.NewInt(7)).Int64(), i)
+		if Crt(big.NewInt(int64(i%5)), big.NewInt(5), big.NewInt(int64(i%7)), big.NewInt(7)).Cmp(big.NewInt(int64(i))) != 0 {
+			t.Errorf("Incorrect reconstruction %d of %d.", Crt(big.NewInt(int64(i%5)), big.NewInt(5), big.NewInt(int64(i%7)), big.NewInt(7)).Int64(), i)
 		}
 	}
 }
@@ -49,12 +49,12 @@ func TestCrtError(t *testing.T) {
 			t.Error("CRT Failed to detect gcd(pa, pb) != 1")
 		}
 	}()
-	crt(big.NewInt(1), big.NewInt(5), big.NewInt(1), big.NewInt(35))
+	Crt(big.NewInt(1), big.NewInt(5), big.NewInt(1), big.NewInt(35))
 }
 
 func TestPrimeSqrt7(t *testing.T) {
 	for i := 0; i < 7; i++ {
-		res, ok := primeSqrt(new(big.Int).Mod(big.NewInt(int64(i*i)), big.NewInt(7)), big.NewInt(7))
+		res, ok := PrimeSqrt(new(big.Int).Mod(big.NewInt(int64(i*i)), big.NewInt(7)), big.NewInt(7))
 		if !ok {
 			t.Errorf("Incorrect rejection of %d as non-square.", (i*i)%7)
 		} else {
@@ -67,7 +67,7 @@ func TestPrimeSqrt7(t *testing.T) {
 
 func TestPrimeSqrt13(t *testing.T) {
 	for i := 0; i < 13; i++ {
-		res, ok := primeSqrt(big.NewInt(int64((i*i)%13)), big.NewInt(13))
+		res, ok := PrimeSqrt(big.NewInt(int64((i*i)%13)), big.NewInt(13))
 		if !ok {
 			t.Errorf("Incorrect rejection of %d as non-square.", (i*i)%13)
 		} else {
@@ -80,7 +80,7 @@ func TestPrimeSqrt13(t *testing.T) {
 
 func TestPrimeSqrt17(t *testing.T) {
 	for i := 0; i < 17; i++ {
-		res, ok := primeSqrt(big.NewInt(int64((i*i)%17)), big.NewInt(17))
+		res, ok := PrimeSqrt(big.NewInt(int64((i*i)%17)), big.NewInt(17))
 		if !ok {
 			t.Errorf("Incorrect rejection of %d as non-square.", (i*i)%17)
 		} else {
@@ -108,7 +108,7 @@ func TestPrimeSqrtNonRoot(t *testing.T) {
 	}
 
 	for _, row := range table {
-		_, ok := primeSqrt(row.a, row.pa)
+		_, ok := PrimeSqrt(row.a, row.pa)
 		if ok {
 			t.Errorf("Incorrect acceptence of %d as square mod %d", row.a.Int64(), row.pa.Int64())
 		}
@@ -122,7 +122,7 @@ func TestModSqrt20(t *testing.T) {
 	}
 
 	for i := 0; i < 20; i++ {
-		res, ok := modSqrt(big.NewInt(int64((i*i)%20)), factors)
+		res, ok := ModSqrt(big.NewInt(int64((i*i)%20)), factors)
 		if !ok {
 			t.Errorf("Incorrect rejection of %d as non-square. (root %d)", (i*i)%20, i)
 		} else {
@@ -142,7 +142,7 @@ func TestModSqrt140(t *testing.T) {
 	}
 
 	for i := 0; i < 140; i++ {
-		res, ok := modSqrt(big.NewInt(int64((i*i)%140)), factors)
+		res, ok := ModSqrt(big.NewInt(int64((i*i)%140)), factors)
 		if !ok {
 			t.Errorf("Incorrect rejection fo %d as non-square. (root %d)", (i*i)%140, i)
 		} else {
@@ -178,7 +178,7 @@ func TestModSqrtNonRoot(t *testing.T) {
 	}
 
 	for _, val := range values {
-		_, ok := modSqrt(val, factors)
+		_, ok := ModSqrt(val, factors)
 		if ok {
 			t.Errorf("Incorrect acceptence of %v as square mod 20", val)
 		}

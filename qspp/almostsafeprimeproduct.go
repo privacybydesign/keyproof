@@ -1,5 +1,6 @@
 package qspp
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 
 type AlmostSafePrimeProductProof struct {
@@ -26,18 +27,18 @@ func AlmostSafePrimeProductBuildCommitments(list []*big.Int, Pprime *big.Int, Qp
 
 	// Generate nonce
 	nonceMax := new(big.Int).Lsh(big.NewInt(1), almostSafePrimeProductNonceSize)
-	commit.Nonce = randomBigInt(nonceMax)
+	commit.Nonce = common.RandomBigInt(nonceMax)
 
 	for i := 0; i < almostSafePrimeProductIters; i++ {
 		// Calculate base from nonce
-		curc := getHashNumber(commit.Nonce, nil, i, N.BitLen())
+		curc := common.GetHashNumber(commit.Nonce, nil, i, uint(N.BitLen()))
 		curc.Mod(curc, N)
 
 		if new(big.Int).GCD(nil, nil, curc, N).Cmp(big.NewInt(1)) != 0 {
 			panic("Generated number not in Z_N")
 		}
 
-		log := randomBigInt(phiN)
+		log := common.RandomBigInt(phiN)
 		com := new(big.Int).Exp(curc, log, N)
 		list = append(list, com)
 		commit.Commitments = append(commit.Commitments, com)
@@ -66,7 +67,7 @@ func AlmostSafePrimeProductBuildProof(Pprime *big.Int, Qprime *big.Int, challeng
 	// Calculate responses
 	for i := 0; i < almostSafePrimeProductIters; i++ {
 		// Derive challenge
-		curc := getHashNumber(challenge, index, i, 2*N.BitLen())
+		curc := common.GetHashNumber(challenge, index, i, uint(2*N.BitLen()))
 
 		log := new(big.Int).Mod(new(big.Int).Add(commit.Logs[i], curc), phiN)
 
@@ -76,10 +77,10 @@ func AlmostSafePrimeProductBuildProof(Pprime *big.Int, Qprime *big.Int, challeng
 		x3 := new(big.Int).Mod(new(big.Int).Mul(new(big.Int).ModInverse(big.NewInt(2), oddPhiN), x1), oddPhiN)
 		x4 := new(big.Int).Sub(oddPhiN, x3)
 
-		r1, ok1 := modSqrt(x1, factors)
-		r2, ok2 := modSqrt(x2, factors)
-		r3, ok3 := modSqrt(x3, factors)
-		r4, ok4 := modSqrt(x4, factors)
+		r1, ok1 := common.ModSqrt(x1, factors)
+		r2, ok2 := common.ModSqrt(x2, factors)
+		r3, ok3 := common.ModSqrt(x3, factors)
+		r4, ok4 := common.ModSqrt(x4, factors)
 
 		// And add the useful one
 		if ok1 {
@@ -140,11 +141,11 @@ func AlmostSafePrimeProductVerifyProof(N *big.Int, challenge *big.Int, index *bi
 	// Check responses
 	for i := 0; i < almostSafePrimeProductIters; i++ {
 		// Generate base
-		base := getHashNumber(proof.Nonce, nil, i, N.BitLen())
+		base := common.GetHashNumber(proof.Nonce, nil, i, uint(N.BitLen()))
 		base.Mod(base, N)
 
 		// Generate challenge
-		x := getHashNumber(challenge, index, i, 2*N.BitLen())
+		x := common.GetHashNumber(challenge, index, i, uint(2*N.BitLen()))
 		y := new(big.Int).Mod(
 			new(big.Int).Mul(
 				proof.Commitments[i],

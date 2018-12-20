@@ -1,5 +1,6 @@
 package qspp
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 
 type SquareFreeProof struct {
@@ -18,7 +19,7 @@ func SquareFreeBuildProof(N *big.Int, phiN *big.Int, challenge *big.Int, index *
 	proof.Responses = []*big.Int{}
 	for i := 0; i < squareFreeIters; i++ {
 		// Generate the challenge
-		curc := getHashNumber(challenge, index, i, N.BitLen())
+		curc := common.GetHashNumber(challenge, index, i, uint(N.BitLen()))
 		curc.Mod(curc, N)
 
 		if new(big.Int).GCD(nil, nil, curc, N).Cmp(big.NewInt(1)) != 0 {
@@ -55,7 +56,7 @@ func SquareFreeVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof
 	// Generate the challenges and verify responses
 	for i := 0; i < squareFreeIters; i++ {
 		// Generate the challenge
-		curc := getHashNumber(challenge, index, i, N.BitLen())
+		curc := common.GetHashNumber(challenge, index, i, uint(N.BitLen()))
 		curc.Mod(curc, N)
 
 		responseResult := new(big.Int).Exp(proof.Responses[i], N, N)

@@ -2,6 +2,7 @@ package qspp
 
 import "testing"
 import "encoding/json"
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 
 func TestQuasiSafePrimeProductCycle(t *testing.T) {
@@ -32,7 +33,7 @@ func TestQuasiSafePrimeProductFullCycle(t *testing.T) {
 	const p = 13451
 	const q = 13901
 	listBefore, commit := QuasiSafePrimeProductBuildCommitments([]*big.Int{}, big.NewInt(p), big.NewInt(q))
-	challengeBefore := hashCommit(listBefore)
+	challengeBefore := common.HashCommit(listBefore)
 	proofBefore := QuasiSafePrimeProductBuildProof(big.NewInt(p), big.NewInt(q), challengeBefore, commit)
 	proofJSON, err := json.Marshal(proofBefore)
 	if err != nil {
@@ -48,7 +49,7 @@ func TestQuasiSafePrimeProductFullCycle(t *testing.T) {
 		return
 	}
 	listAfter := QuasiSafePrimeProductExtractCommitments([]*big.Int{}, proofAfter)
-	challengeAfter := hashCommit(listAfter)
+	challengeAfter := common.HashCommit(listAfter)
 	ok := QuasiSafePrimeProductVerifyProof(big.NewInt((2*p+1)*(2*q+1)), challengeAfter, proofAfter)
 	if !ok {
 		t.Error("JSON proof rejected")

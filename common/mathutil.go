@@ -1,4 +1,4 @@
-package qspp
+package common
 
 import "crypto/rand"
 import "github.com/mhe/gabi/big"
@@ -16,7 +16,7 @@ var (
 )
 
 // legendreSymbol calculates the Legendre symbol (a/p).
-func legendreSymbol(a, p *big.Int) int {
+func LegendreSymbol(a, p *big.Int) int {
 	// Adapted from: https://programmingpraxis.com/2012/05/01/legendres-symbol/
 	// Probably needs more extensive checking? Also, no optimization has been applied.
 	j := 1
@@ -55,7 +55,7 @@ func legendreSymbol(a, p *big.Int) int {
 }
 
 // Find a number x (mod pa*pb) such that x = a (mod pa) and x = b (mod pb)
-func crt(a *big.Int, pa *big.Int, b *big.Int, pb *big.Int) *big.Int {
+func Crt(a *big.Int, pa *big.Int, b *big.Int, pb *big.Int) *big.Int {
 	s1 := new(big.Int)
 	s2 := new(big.Int)
 	z := new(big.Int).GCD(s2, s1, pa, pb)
@@ -72,7 +72,7 @@ func crt(a *big.Int, pa *big.Int, b *big.Int, pb *big.Int) *big.Int {
 }
 
 // Calculate sqrt modulo a prime
-func primeSqrt(a *big.Int, pa *big.Int) (*big.Int, bool) {
+func PrimeSqrt(a *big.Int, pa *big.Int) (*big.Int, bool) {
 	// Handle the case a == 0
 	if a.Cmp(bigZERO) == 0 {
 		return big.NewInt(0), true // should be a new big int!
@@ -93,7 +93,7 @@ func primeSqrt(a *big.Int, pa *big.Int) (*big.Int, bool) {
 
 	// Find a non-residue
 	z := big.NewInt(2) // Should be a new big int!
-	for legendreSymbol(new(big.Int).Set(z), new(big.Int).Set(pa)) != -1 {
+	for LegendreSymbol(new(big.Int).Set(z), new(big.Int).Set(pa)) != -1 {
 		z.Add(z, bigONE)
 	}
 
@@ -130,7 +130,7 @@ func primeSqrt(a *big.Int, pa *big.Int) (*big.Int, bool) {
 
 // Calculate Sqrt modulo a number with given prime factors. Also allows 4 as a factor
 // All factors should be relatively prime to each other!
-func modSqrt(a *big.Int, factors []*big.Int) (*big.Int, bool) {
+func ModSqrt(a *big.Int, factors []*big.Int) (*big.Int, bool) {
 	n := big.NewInt(1) // Should be new big int!
 	res := new(big.Int)
 
@@ -149,7 +149,7 @@ func modSqrt(a *big.Int, factors []*big.Int) (*big.Int, bool) {
 			}
 		} else {
 			var ok bool
-			locRes, ok = primeSqrt(new(big.Int).Mod(a, fac), fac)
+			locRes, ok = PrimeSqrt(new(big.Int).Mod(a, fac), fac)
 			if !ok {
 				return nil, false
 			}
@@ -157,7 +157,7 @@ func modSqrt(a *big.Int, factors []*big.Int) (*big.Int, bool) {
 		if i == 0 {
 			res = locRes
 		} else {
-			res = crt(res, n, locRes, fac)
+			res = Crt(res, n, locRes, fac)
 		}
 		n.Mul(n, fac)
 	}
@@ -165,7 +165,7 @@ func modSqrt(a *big.Int, factors []*big.Int) (*big.Int, bool) {
 }
 
 // Generate a (cryptographically secure!) random number
-func randomBigInt(limit *big.Int) *big.Int {
+func RandomBigInt(limit *big.Int) *big.Int {
 	res, err := big.RandInt(rand.Reader, limit)
 	if err != nil {
 		panic(err.Error())

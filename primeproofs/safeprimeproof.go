@@ -1,5 +1,6 @@
 package primeproofs
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 import "github.com/mhe/gabi/safeprime"
 
@@ -124,7 +125,7 @@ func (s SafePrimeProofStructure) buildProof(Pprime *big.Int, Qprime *big.Int) Sa
 
 	PQNRelSecret := SafePrimeSecret{
 		new(big.Int).Mod(new(big.Int).Mul(PSecret.hider, QSecret.secret), g.order),
-		randomBigInt(g.order),
+		common.RandomBigInt(g.order),
 	}
 
 	// Build up bases and secrets structures
@@ -151,7 +152,7 @@ func (s SafePrimeProofStructure) buildProof(Pprime *big.Int, Qprime *big.Int) Sa
 	list, QprimeIsPrimeCommit = s.QprimeIsPrime.GenerateCommitmentsFromSecrets(g, list, &bases, &secrets)
 
 	// Calculate challenge
-	challenge := hashCommit(list)
+	challenge := common.HashCommit(list)
 
 	// Calculate proofs
 	var proof SafePrimeProof
@@ -230,7 +231,7 @@ func (s SafePrimeProofStructure) verifyProof(proof SafePrimeProof) bool {
 	list = s.QprimeIsPrime.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs, proof.QprimeIsPrimeProof)
 
 	// Check challenge
-	if proof.Challenge.Cmp(hashCommit(list)) != 0 {
+	if proof.Challenge.Cmp(common.HashCommit(list)) != 0 {
 		return false
 	}
 

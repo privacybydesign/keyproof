@@ -1,5 +1,6 @@
 package primeproofs
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 import "strings"
 
@@ -86,13 +87,13 @@ func (s *expStepAStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 	// Build commit structure
 	commit.nameBit = strings.Join([]string{s.bitname, "hider"}, "_")
 	commit.nameEquality = strings.Join([]string{s.myname, "eqhider"}, "_")
-	commit.bitHiderRandomizer = randomBigInt(g.order)
+	commit.bitHiderRandomizer = common.RandomBigInt(g.order)
 	commit.equalityHider = new(big.Int).Mod(
 		new(big.Int).Sub(
 			secretdata.GetSecret(strings.Join([]string{s.prename, "hider"}, "_")),
 			secretdata.GetSecret(strings.Join([]string{s.postname, "hider"}, "_"))),
 		g.order)
-	commit.equalityHiderRandomizer = randomBigInt(g.order)
+	commit.equalityHiderRandomizer = common.RandomBigInt(g.order)
 
 	// inner secrets
 	secrets := newSecretMerge(&commit, secretdata)
@@ -129,8 +130,8 @@ func (s *expStepAStructure) BuildProof(g group, challenge *big.Int, commit expSt
 func (s *expStepAStructure) FakeProof(g group) expStepAProof {
 	var proof expStepAProof
 
-	proof.BitHiderResult = randomBigInt(g.order)
-	proof.EqualityHiderResult = randomBigInt(g.order)
+	proof.BitHiderResult = common.RandomBigInt(g.order)
+	proof.EqualityHiderResult = common.RandomBigInt(g.order)
 
 	return proof
 }

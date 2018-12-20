@@ -1,5 +1,6 @@
 package primeproofs
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 import "strings"
 
@@ -101,7 +102,7 @@ func (s *AdditionProofStructure) GenerateCommitmentsFromSecrets(g group, list []
 				secretdata.GetSecret(s.a1),
 				secretdata.GetSecret(s.a2))),
 		secretdata.GetSecret(s.mod))
-	commit.ModAddRandomizer = randomBigInt(g.order)
+	commit.ModAddRandomizer = common.RandomBigInt(g.order)
 	commit.Hider = new(big.Int).Mod(
 		new(big.Int).Sub(
 			secretdata.GetSecret(strings.Join([]string{s.result, "hider"}, "_")),
@@ -113,7 +114,7 @@ func (s *AdditionProofStructure) GenerateCommitmentsFromSecrets(g group, list []
 					secretdata.GetSecret(strings.Join([]string{s.mod, "hider"}, "_")),
 					commit.ModAdd))),
 		g.order)
-	commit.HiderRandomizer = randomBigInt(g.order)
+	commit.HiderRandomizer = common.RandomBigInt(g.order)
 
 	// build inner secrets
 	secrets := newSecretMerge(&commit, secretdata)
@@ -152,8 +153,8 @@ func (s *AdditionProofStructure) FakeProof(g group) AdditionProof {
 	var proof AdditionProof
 
 	proof.RangeProof = s.addRange.FakeProof(g)
-	proof.ModAddResult = randomBigInt(g.order)
-	proof.HiderResult = randomBigInt(g.order)
+	proof.ModAddResult = common.RandomBigInt(g.order)
+	proof.HiderResult = common.RandomBigInt(g.order)
 
 	return proof
 }

@@ -1,5 +1,6 @@
 package primeproofs
 
+import "github.com/privacybydesign/keyproof/common"
 import "github.com/mhe/gabi/big"
 
 type RangeProofStructure struct {
@@ -52,10 +53,10 @@ func (s *RangeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*bi
 		for name, clist := range commit.commits {
 			var rval *big.Int
 			if name == s.rangeSecret {
-				rval = randomBigInt(genLimit)
+				rval = common.RandomBigInt(genLimit)
 				rval.Sub(rval, genOffset)
 			} else {
-				rval = randomBigInt(g.order)
+				rval = common.RandomBigInt(g.order)
 			}
 			commit.commits[name] = append(clist, rval)
 		}
@@ -117,13 +118,13 @@ func (s *RangeProofStructure) FakeProof(g group) RangeProof {
 		if curRhs.Secret == s.rangeSecret {
 			rlist := []*big.Int{}
 			for i := 0; i < rangeProofIters; i++ {
-				rlist = append(rlist, randomBigInt(genLimit))
+				rlist = append(rlist, common.RandomBigInt(genLimit))
 			}
 			proof.Results[curRhs.Secret] = rlist
 		} else {
 			rlist := []*big.Int{}
 			for i := 0; i < rangeProofIters; i++ {
-				rlist = append(rlist, randomBigInt(g.order))
+				rlist = append(rlist, common.RandomBigInt(g.order))
 			}
 			proof.Results[curRhs.Secret] = rlist
 		}
