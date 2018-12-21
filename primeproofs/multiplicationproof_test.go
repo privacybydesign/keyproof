@@ -56,35 +56,6 @@ func TestMultiplicationProofFlow(t *testing.T) {
 	}
 }
 
-func TestMultiplicationProofVerifyStructure(t *testing.T) {
-	g, gok := buildGroup(big.NewInt(47))
-	if !gok {
-		t.Error("Failed to setup group for Multiplication proof testing")
-		return
-	}
-
-	var proof MultiplicationProof
-	s := newMultiplicationProofStructure("m1", "m2", "mod", "result", 3)
-
-	proof.ModMultResult = big.NewInt(1)
-	proof.HiderResult = big.NewInt(1)
-	if s.VerifyProofStructure(proof) {
-		t.Error("Accepting malformed range proof")
-	}
-
-	proof.RangeProof = s.multRange.FakeProof(g)
-	proof.ModMultResult = nil
-	if s.VerifyProofStructure(proof) {
-		t.Error("Accepting missing modmulresult")
-	}
-
-	proof.ModMultResult = proof.HiderResult
-	proof.HiderResult = nil
-	if s.VerifyProofStructure(proof) {
-		t.Error("Accepting missing hiderresult")
-	}
-}
-
 func TestMultiplicationProofFake(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
 	if !gok {
@@ -98,6 +69,35 @@ func TestMultiplicationProofFake(t *testing.T) {
 
 	if !s.VerifyProofStructure(proof) {
 		t.Error("Fake proof structure rejected.")
+	}
+}
+
+func TestMultiplicationProofVerifyStructure(t *testing.T) {
+	g, gok := buildGroup(big.NewInt(47))
+	if !gok {
+		t.Error("Failed to setup group for Multiplication proof testing")
+		return
+	}
+
+	var proof MultiplicationProof
+	s := newMultiplicationProofStructure("m1", "m2", "mod", "result", 3)
+
+	proof = s.FakeProof(g)
+	proof.ModMultProof.Commit = nil
+	if s.VerifyProofStructure(proof) {
+		t.Error("Accepting malformed ModMultProof")
+	}
+
+	proof = s.FakeProof(g)
+	proof.HiderResult = nil
+	if s.VerifyProofStructure(proof) {
+		t.Error("Accepting missing HiderResult")
+	}
+
+	proof = s.FakeProof(g)
+	proof.RangeProof.Results = nil
+	if s.VerifyProofStructure(proof) {
+		t.Error("Accepting malformed range proof")
 	}
 }
 

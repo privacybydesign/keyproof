@@ -158,7 +158,7 @@ func TestExpProofVerifyStructure(t *testing.T) {
 	}
 
 	proof = s.FakeProof(g, big.NewInt(12345))
-	proof.BasePowRelProofs[2].ModMultResult = nil
+	proof.BasePowRelProofs[2].HiderResult = nil
 	if s.VerifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting corrupted basepowrelproof")
 	}
