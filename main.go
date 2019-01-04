@@ -12,6 +12,14 @@ func printHelp() {
 	fmt.Printf("Possible actions: buildproof, verify\n")
 }
 
+var progMax = 0
+var progCount = 0
+
+func LogTick() {
+	progCount++
+	fmt.Printf("\r%v/%v", progCount, progMax)
+}
+
 func buildProof(skfilename, prooffilename string) {
 	// Try to read private key
 	sk, err := gabi.NewPrivateKeyFromFile(skfilename)
@@ -45,6 +53,8 @@ func buildProof(skfilename, prooffilename string) {
 	// Build the proof
 	N := new(big.Int).Mul(sk.P, sk.Q)
 	s := primeproofs.NewSafePrimeProofStructure(N)
+	progMax = s.NumRangeProofs()
+	primeproofs.RangeProofLog = LogTick
 	proof := s.BuildProof(sk.PPrime, sk.QPrime)
 
 	// And write it to file
@@ -77,6 +87,8 @@ func verifyProof(pkfilename, prooffilename string) {
 
 	// Construct proof structure
 	s := primeproofs.NewSafePrimeProofStructure(pk.N)
+	progMax = s.NumRangeProofs()
+	primeproofs.RangeProofLog = LogTick
 
 	// And use it to validate the proof
 	if !s.VerifyProof(proof) {

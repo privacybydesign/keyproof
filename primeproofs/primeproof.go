@@ -214,6 +214,13 @@ func newPrimeProofStructure(name string, bitlen uint) PrimeProofStructure {
 	return structure
 }
 
+func (s *PrimeProofStructure) NumRangeProofs() int {
+	res := 4
+	res += s.aExp.NumRangeProofs()
+	res += s.anegExp.NumRangeProofs()
+	return res
+}
+
 func (s *PrimeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, PrimeProofCommit) {
 	var commit PrimeProofCommit
 

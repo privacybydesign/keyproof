@@ -74,6 +74,10 @@ func newMultiplicationProofStructure(m1, m2, mod, result string, l uint) Multipl
 	return structure
 }
 
+func (s *MultiplicationProofStructure) NumRangeProofs() int {
+	return 1
+}
+
 func (s *MultiplicationProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, MultiplicationProofCommit) {
 	var commit MultiplicationProofCommit
 

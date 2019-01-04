@@ -37,6 +37,10 @@ func newExpStepStructure(bitname, prename, postname, mulname, modname string, bi
 	return structure
 }
 
+func (s *expStepStructure) NumRangeProofs() int {
+	return s.stepa.NumRangeProofs() + s.stepb.NumRangeProofs()
+}
+
 func (s *expStepStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, expStepCommit) {
 	var commit expStepCommit
 

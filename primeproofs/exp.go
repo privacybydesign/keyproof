@@ -229,6 +229,18 @@ func newExpProofStructure(base, exponent, mod, result string, bitlen uint) expPr
 	return structure
 }
 
+func (s *expProofStructure) NumRangeProofs() int {
+	res := len(s.basePowRange)
+	for i, _ := range s.basePowRels {
+		res += s.basePowRels[i].NumRangeProofs()
+	}
+	res += len(s.interResRange)
+	for i, _ := range s.interSteps {
+		res += s.interSteps[i].NumRangeProofs()
+	}
+	return res
+}
+
 func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, expProofCommit) {
 	var commit expProofCommit
 

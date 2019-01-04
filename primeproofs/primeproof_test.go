@@ -11,6 +11,14 @@ func TestPrimeProofFlow(t *testing.T) {
 		return
 	}
 
+	var logCount = 0
+	RangeProofLog = func() {
+		logCount++
+	}
+	defer func() {
+		RangeProofLog = func() {}
+	}()
+
 	s := newPrimeProofStructure("p", 4)
 
 	const p = 11
@@ -18,6 +26,12 @@ func TestPrimeProofFlow(t *testing.T) {
 	bases := newBaseMerge(&g, &pCommit)
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &pCommit)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off GenerateCommitmentsFromSecrets")
+	}
+	logCount = 0
+
 	proof := s.BuildProof(g, big.NewInt(12345), commit, &pCommit)
 	pProof := pCommit.BuildProof(g, big.NewInt(12345))
 	pProof.SetName("p")
@@ -30,6 +44,11 @@ func TestPrimeProofFlow(t *testing.T) {
 	}
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &pProof, proof)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off on GenerateCommitmentsFromProof")
+	}
+
 	if !listCmp(listSecrets, listProof) {
 		t.Error("Commitment lists differ.")
 	}

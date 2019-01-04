@@ -109,7 +109,11 @@ func NewSafePrimeProofStructure(N *big.Int) SafePrimeProofStructure {
 	return structure
 }
 
-func (s SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) SafePrimeProof {
+func (s *SafePrimeProofStructure) NumRangeProofs() int {
+	return s.PprimeIsPrime.NumRangeProofs() + s.QprimeIsPrime.NumRangeProofs()
+}
+
+func (s *SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) SafePrimeProof {
 	// Generate proof group
 	GroupPrime, err := safeprime.Generate(s.N.BitLen() + 2*rangeProofEpsilon + 10)
 	if err != nil {
@@ -182,7 +186,7 @@ func (s SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) Sa
 	return proof
 }
 
-func (s SafePrimeProofStructure) VerifyProof(proof SafePrimeProof) bool {
+func (s *SafePrimeProofStructure) VerifyProof(proof SafePrimeProof) bool {
 	// Check proof structure
 	if proof.GroupPrime == nil || proof.GroupPrime.BitLen() != s.N.BitLen()+2*rangeProofEpsilon+10 {
 		return false

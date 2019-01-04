@@ -55,6 +55,14 @@ func TestRepresentationProofBasics(t *testing.T) {
 		return
 	}
 
+	var logCount = 0
+	RangeProofLog = func() {
+		logCount++
+	}
+	defer func() {
+		RangeProofLog = func() {}
+	}()
+
 	var s RepresentationProofStructure
 	s.Lhs = []LhsContribution{
 		LhsContribution{"x", big.NewInt(1)},
@@ -76,7 +84,17 @@ func TestRepresentationProofBasics(t *testing.T) {
 	bases := newBaseMerge(&g, &commit)
 
 	listSecrets := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off GenerateCommitmentsFromSecrets")
+	}
+	logCount = 0
+
 	listProofs := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(1), &bases, &proof)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off on GenerateCommitmentsFromProof")
+	}
 
 	if !s.IsTrue(g, &bases, &secret) {
 		t.Error("Incorrect rejection of truth")
@@ -109,6 +127,14 @@ func TestRepresentationProofComplex(t *testing.T) {
 		RhsContribution{"h", "y", 1},
 	}
 
+	var logCount = 0
+	RangeProofLog = func() {
+		logCount++
+	}
+	defer func() {
+		RangeProofLog = func() {}
+	}()
+
 	var secret RepTestSecret
 	secret.secrets = map[string]*big.Int{
 		"x": big.NewInt(4),
@@ -137,7 +163,17 @@ func TestRepresentationProofComplex(t *testing.T) {
 	bases := newBaseMerge(&g, &commit)
 
 	listSecrets := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off GenerateCommitmentsFromSecrets")
+	}
+	logCount = 0
+
 	listProofs := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(2), &bases, &proof)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off on GenerateCommitmentsFromProof")
+	}
 
 	if !s.IsTrue(g, &bases, &secret) {
 		t.Error("Incorrect rejection of truth")

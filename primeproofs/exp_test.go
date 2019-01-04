@@ -16,6 +16,14 @@ func TestExpProofFlow(t *testing.T) {
 		return
 	}
 
+	var logCount = 0
+	RangeProofLog = func() {
+		logCount++
+	}
+	defer func() {
+		RangeProofLog = func() {}
+	}()
+
 	aPederson := newPedersonSecret(g, "a", big.NewInt(a))
 	bPederson := newPedersonSecret(g, "b", big.NewInt(b))
 	nPederson := newPedersonSecret(g, "n", big.NewInt(n))
@@ -31,6 +39,12 @@ func TestExpProofFlow(t *testing.T) {
 	}
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off GenerateCommitmentsFromSecrets")
+	}
+	logCount = 0
+
 	proof := s.BuildProof(g, big.NewInt(12345), commit, &secrets)
 
 	if !s.VerifyProofStructure(big.NewInt(12345), proof) {
@@ -51,6 +65,10 @@ func TestExpProofFlow(t *testing.T) {
 	proofs := newProofMerge(&aProof, &bProof, &nProof, &rProof)
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, &proofs, proof)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off on GenerateCommitmentsFromProof")
+	}
 
 	if !listCmp(listSecrets, listProof) {
 		t.Error("Commitment lists differ")

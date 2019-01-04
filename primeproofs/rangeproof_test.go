@@ -56,6 +56,14 @@ func TestRangeProofBasic(t *testing.T) {
 		return
 	}
 
+	var logCount = 0
+	RangeProofLog = func() {
+		logCount++
+	}
+	defer func() {
+		RangeProofLog = func() {}
+	}()
+
 	var s RangeProofStructure
 	s.Lhs = []LhsContribution{
 		LhsContribution{"x", big.NewInt(1)},
@@ -85,6 +93,12 @@ func TestRangeProofBasic(t *testing.T) {
 	}
 
 	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off GenerateCommitmentsFromSecrets")
+	}
+	logCount = 0
+
 	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
 
 	if !s.VerifyProofStructure(proof) {
@@ -93,6 +107,10 @@ func TestRangeProofBasic(t *testing.T) {
 	}
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off on GenerateCommitmentsFromProof")
+	}
 
 	if !listCmp(listSecret, listProof) {
 		t.Error("Commitment lists disagree")
@@ -105,6 +123,15 @@ func TestRangeProofComplex(t *testing.T) {
 		t.Error("Failed to setup group for Range proof testing")
 		return
 	}
+
+	var logCount = 0
+	RangeProofLog = func() {
+		logCount++
+	}
+	defer func() {
+		RangeProofLog = func() {}
+	}()
+
 	var s RangeProofStructure
 	s.Lhs = []LhsContribution{
 		LhsContribution{"c", big.NewInt(1)},
@@ -139,6 +166,12 @@ func TestRangeProofComplex(t *testing.T) {
 	}
 
 	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off GenerateCommitmentsFromSecrets")
+	}
+	logCount = 0
+
 	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
 
 	if !s.VerifyProofStructure(proof) {
@@ -147,6 +180,10 @@ func TestRangeProofComplex(t *testing.T) {
 	}
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off on GenerateCommitmentsFromProof")
+	}
 
 	if !listCmp(listSecret, listProof) {
 		t.Error("Commitment lists disagree")

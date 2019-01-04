@@ -18,6 +18,10 @@ type RepresentationProofStructure struct {
 	Rhs []RhsContribution
 }
 
+func (s *RepresentationProofStructure) NumRangeProofs() int {
+	return 0
+}
+
 func (s *RepresentationProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) []*big.Int {
 	commitment := big.NewInt(1)
 

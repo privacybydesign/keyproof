@@ -11,6 +11,14 @@ func TestAdditionProofFlow(t *testing.T) {
 		return
 	}
 
+	var logCount = 0
+	RangeProofLog = func() {
+		logCount++
+	}
+	defer func() {
+		RangeProofLog = func() {}
+	}()
+
 	const a = 4
 	const b = 3
 	const d = 2
@@ -31,6 +39,11 @@ func TestAdditionProofFlow(t *testing.T) {
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
 
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off GenerateCommitmentsFromSecrets")
+	}
+	logCount = 0
+
 	proof := s.BuildProof(g, big.NewInt(12345), commit, &secrets)
 	a1proof := a1.BuildProof(g, big.NewInt(12345))
 	a1proof.SetName("a1")
@@ -50,6 +63,10 @@ func TestAdditionProofFlow(t *testing.T) {
 	}
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &proofdata, proof)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off on GenerateCommitmentsFromProof")
+	}
 
 	if !listCmp(listSecrets, listProof) {
 		t.Error("Commitment lists differ.\n")

@@ -11,6 +11,14 @@ func TestExpStepFlowA(t *testing.T) {
 		return
 	}
 
+	var logCount = 0
+	RangeProofLog = func() {
+		logCount++
+	}
+	defer func() {
+		RangeProofLog = func() {}
+	}()
+
 	bitPederson := newPedersonSecret(g, "bit", big.NewInt(0))
 	prePederson := newPedersonSecret(g, "pre", big.NewInt(2))
 	postPederson := newPedersonSecret(g, "post", big.NewInt(2))
@@ -27,6 +35,12 @@ func TestExpStepFlowA(t *testing.T) {
 	}
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off GenerateCommitmentsFromSecrets")
+	}
+	logCount = 0
+
 	proof := s.BuildProof(g, big.NewInt(12345), commit, &secrets)
 
 	if !s.VerifyProofStructure(big.NewInt(12345), proof) {
@@ -48,6 +62,10 @@ func TestExpStepFlowA(t *testing.T) {
 	proofBases := newBaseMerge(&g, &bitProof, &preProof, &postProof, &mulProof, &modProof)
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, proof)
+
+	if logCount != s.NumRangeProofs() {
+		t.Error("Logging is off on GenerateCommitmentsFromProof")
+	}
 
 	if !listCmp(listSecrets, listProof) {
 		t.Error("Commitment lists differ.")
