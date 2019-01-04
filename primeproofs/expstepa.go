@@ -85,6 +85,10 @@ func (s *expStepAStructure) NumRangeProofs() int {
 	return 0
 }
 
+func (s *expStepAStructure) NumCommitments() int {
+	return s.bitRep.NumCommitments() + s.equalityRep.NumCommitments()
+}
+
 func (s *expStepAStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, expStepACommit) {
 	var commit expStepACommit
 

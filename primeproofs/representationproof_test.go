@@ -78,6 +78,10 @@ func TestRepresentationProofBasics(t *testing.T) {
 	bases := newBaseMerge(&g, &commit)
 
 	listSecrets := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+	
+	if len(listSecrets) != s.NumCommitments() {
+		t.Error("NumCommitments is off")
+	}
 
 	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
@@ -151,6 +155,10 @@ func TestRepresentationProofComplex(t *testing.T) {
 	bases := newBaseMerge(&g, &commit)
 
 	listSecrets := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+	
+	if len(listSecrets) != s.NumCommitments() {
+		t.Error("NumCommitments is off")
+	}
 
 	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")

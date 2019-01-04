@@ -33,6 +33,10 @@ func TestExpProofFlow(t *testing.T) {
 	}
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
+	
+	if len(listSecrets) != s.NumCommitments() {
+		t.Error("NumCommitments is off")
+	}
 
 	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
@@ -65,7 +69,7 @@ func TestExpProofFlow(t *testing.T) {
 	}
 
 	if !listCmp(listSecrets, listProof) {
-		t.Error("Commitment lists differ")
+		t.Errorf("Commitment lists differ\n%v\n%v", listSecrets, listProof)
 	}
 }
 

@@ -41,6 +41,10 @@ func (s *expStepStructure) NumRangeProofs() int {
 	return s.stepa.NumRangeProofs() + s.stepb.NumRangeProofs()
 }
 
+func (s *expStepStructure) NumCommitments() int {
+	return s.stepa.NumCommitments() + s.stepb.NumCommitments()
+}
+
 func (s *expStepStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, expStepCommit) {
 	var commit expStepCommit
 

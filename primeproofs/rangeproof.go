@@ -39,6 +39,10 @@ func (s *RangeProofStructure) NumRangeProofs() int {
 	return 1
 }
 
+func (s *RangeProofStructure) NumCommitments() int {
+	return rangeProofIters
+}
+
 func (s *RangeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, RangeCommit) {
 	var commit RangeCommitSecretLookup
 

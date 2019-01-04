@@ -27,6 +27,10 @@ func TestExpStepAFlow(t *testing.T) {
 	}
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
+	
+	if len(listSecrets) != s.NumCommitments() {
+		t.Error("NumCommitments is off")
+	}
 
 	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")

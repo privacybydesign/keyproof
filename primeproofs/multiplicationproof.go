@@ -78,6 +78,13 @@ func (s *MultiplicationProofStructure) NumRangeProofs() int {
 	return 1
 }
 
+func (s *MultiplicationProofStructure) NumCommitments() int {
+	return s.multRepresentation.NumCommitments() + 
+		s.modMultRepresentation.NumCommitments() + 
+		s.modMultRange.NumCommitments() +
+		1
+}
+
 func (s *MultiplicationProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, MultiplicationProofCommit) {
 	var commit MultiplicationProofCommit
 
@@ -110,6 +117,7 @@ func (s *MultiplicationProofStructure) GenerateCommitmentsFromSecrets(g group, l
 	secrets := newSecretMerge(&commit, &commit.modMultPederson, secretdata)
 
 	// Generate commitments for the two proofs
+	list = commit.modMultPederson.GenerateCommitments(list)
 	list = s.multRepresentation.GenerateCommitmentsFromSecrets(g, list, bases, &secrets)
 	list = s.modMultRepresentation.GenerateCommitmentsFromSecrets(g, list, bases, &secrets)
 	list, commit.RangeCommit = s.modMultRange.GenerateCommitmentsFromSecrets(g, list, bases, &secrets)
@@ -161,6 +169,7 @@ func (s *MultiplicationProofStructure) GenerateCommitmentsFromProof(g group, lis
 	innerBases := newBaseMerge(&proof.ModMultProof, bases)
 
 	// And regenerate the commitments
+	list = proof.ModMultProof.GenerateCommitments(list)
 	list = s.multRepresentation.GenerateCommitmentsFromProof(g, list, challenge, &innerBases, &proofs)
 	list = s.modMultRepresentation.GenerateCommitmentsFromProof(g, list, challenge, &innerBases, &proofs)
 	list = s.modMultRange.GenerateCommitmentsFromProof(g, list, challenge, &innerBases, proof.RangeProof)

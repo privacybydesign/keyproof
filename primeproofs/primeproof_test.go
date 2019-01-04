@@ -20,6 +20,10 @@ func TestPrimeProofFlow(t *testing.T) {
 	bases := newBaseMerge(&g, &pCommit)
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &pCommit)
+	
+	if len(listSecrets) != s.NumCommitments() {
+		t.Error("NumCommitments is off")
+	}
 
 	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")

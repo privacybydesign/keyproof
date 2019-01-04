@@ -42,6 +42,9 @@ func listCmp(a []*big.Int, b []*big.Int) bool {
 		return false
 	}
 	for i, ai := range a {
+		if ai == nil || b[i] == nil {
+			return false
+		}
 		if ai.Cmp(b[i]) != 0 {
 			return false
 		}
@@ -87,6 +90,10 @@ func TestRangeProofBasic(t *testing.T) {
 	}
 
 	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+	
+	if len(listSecret) != s.NumCommitments() {
+		t.Error("NumCommitments is off")
+	}
 
 	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
@@ -154,6 +161,10 @@ func TestRangeProofComplex(t *testing.T) {
 	}
 
 	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+	
+	if len(listSecret) != s.NumCommitments() {
+		t.Error("NumCommitments is off")
+	}
 
 	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")

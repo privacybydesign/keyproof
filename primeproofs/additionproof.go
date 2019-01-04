@@ -93,6 +93,10 @@ func (s *AdditionProofStructure) NumRangeProofs() int {
 	return 1
 }
 
+func (s *AdditionProofStructure) NumCommitments() int {
+	return s.addRepresentation.NumCommitments() + s.addRange.NumCommitments()
+}
+
 func (s *AdditionProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, AdditionProofCommit) {
 	var commit AdditionProofCommit
 

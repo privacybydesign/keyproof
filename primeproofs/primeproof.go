@@ -221,6 +221,26 @@ func (s *PrimeProofStructure) NumRangeProofs() int {
 	return res
 }
 
+func (s *PrimeProofStructure) NumCommitments() int {
+	res := 6
+	res += s.halfPRep.NumCommitments()
+	res += s.preaRep.NumCommitments()
+	res += s.preaRange.NumCommitments()
+	res += s.aRep.NumCommitments()
+	res += s.aRange.NumCommitments()
+	res += s.anegRep.NumCommitments()
+	res += s.anegRange.NumCommitments()
+	res += 1
+	res += rangeProofIters
+	res += s.aResRep.NumCommitments()
+	res += s.anegResRep.NumCommitments()
+	res += s.aPlus1ResRep.NumCommitments()
+	res += s.aMin1ResRep.NumCommitments()
+	res += s.aExp.NumCommitments()
+	res += s.anegExp.NumCommitments()
+	return res
+}
+
 func (s *PrimeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, PrimeProofCommit) {
 	var commit PrimeProofCommit
 
