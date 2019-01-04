@@ -7,19 +7,49 @@ import "encoding/json"
 import "fmt"
 import "os"
 
-type LogFollower struct {
-	status string
-	limit  int
-	count  int
-	done   bool
+type StepStartMessage struct {
+	desc          string
+	intermediates int
+}
+type StepDoneMessage struct {}
+type TickMessage struct {}
+type QuitMessage struct {}
+type FinishMessage struct {}
+type SetFinalMessage struct {
+	message string
 }
 
-func (l *LogFollower) PrintStatus() {
+type LogFollower struct {
+	StepStartEvents chan<- StepStartMessage
+	StepDoneEvents  chan<- StepDoneMessage
+	TickEvents      chan<- TickMessage
+	QuitEvents      chan<- QuitMessage
+	FinalEvents     chan<- SetFinalMessage
+	Finished        <-chan FinishMessage
+}
+
+func (l *LogFollower) StepStart(desc string, intermediates int) {
+	l.StepStartEvents <- StepStartMessage{desc, intermediates}
+}
+
+func (l *LogFollower) StepDone() {
+	l.StepDoneEvents <- StepDoneMessage{}
+}
+
+func (l *LogFollower) Tick() {
+	l.TickEvents <- TickMessage{}
+}
+
+func (l *LogFollower) Quit() {
+	l.QuitEvents <- QuitMessage{}
+}
+
+func PrintStatus(status string, count, limit int, done bool) {
 	var tail string
-	if l.done {
+	if done {
 		tail = "done"
-	} else if l.limit > 0 {
-		tail = fmt.Sprintf("%v/%v", l.count, l.limit)
+	} else if limit > 0 {
+		tail = fmt.Sprintf("%v/%v", count, limit)
 	} else {
 		tail = ""
 	}
@@ -29,30 +59,80 @@ func (l *LogFollower) PrintStatus() {
 		tlen = 4
 	}
 	
-	fmt.Printf("\r%s", l.status)
-	for i := 0; i < 60-len(l.status) - tlen; i++ {
+	fmt.Printf("\r%s", status)
+	for i := 0; i < 60-len(status) - tlen; i++ {
 		fmt.Printf(".")
 	}
 	fmt.Printf("%s", tail)
 }
 
-func (l *LogFollower) StepStart(desc string, intermediates int) {
-	l.limit = intermediates
-	l.count = 0
-	l.status = desc
-	l.done = false
-	l.PrintStatus()
-}
-
-func (l *LogFollower) Tick() {
-	l.count++
-	l.PrintStatus()
-}
-
-func (l *LogFollower) StepDone() {
-	l.done = true
-	l.PrintStatus()
-	fmt.Printf("\n")
+func StartLogFollower() *LogFollower {
+	var result = new(LogFollower)
+	
+	starts := make(chan StepStartMessage)
+	dones := make(chan StepDoneMessage)
+	ticks := make(chan TickMessage)
+	quit := make(chan QuitMessage)
+	finished := make(chan FinishMessage)
+	finalmessage := make(chan SetFinalMessage)
+	
+	result.StepStartEvents = starts
+	result.StepDoneEvents = dones
+	result.TickEvents = ticks
+	result.QuitEvents = quit
+	result.Finished = finished
+	result.FinalEvents = finalmessage
+	
+	go func() {
+		doneMissing := 0
+		curStatus := ""
+		curCount := 0
+		curLimit := 0
+		curDone := true
+		finalMessage := ""
+		
+		for {
+			select {
+			case <- ticks:
+				curCount++
+			case <- dones:
+				if doneMissing > 0 {
+					doneMissing--
+					continue; // Swallow quietly
+				} else {
+					curDone = true
+					PrintStatus(curStatus, curCount, curLimit, true)
+					fmt.Printf("\n")
+				}
+			case stepstart := <- starts:
+				if !curDone {
+					PrintStatus(curStatus, curCount, curLimit, true)
+					fmt.Printf("\n")
+					doneMissing++
+				}
+				curDone = false
+				curCount = 0
+				curLimit = stepstart.intermediates
+				curStatus = stepstart.desc
+			case messageevent := <- finalmessage:
+				finalMessage = messageevent.message
+			case <- quit:
+				if finalMessage != "" {
+					fmt.Printf("%s\n", finalMessage)
+				}
+				finished <- FinishMessage{}
+				return
+			}
+			
+			if !curDone {
+				PrintStatus(curStatus, curCount, curLimit, false)
+			}
+		}
+	} ()
+	
+	primeproofs.Follower = result
+	
+	return result
 }
 
 func printHelp() {
@@ -96,15 +176,26 @@ func buildProof(skfilename, prooffilename string) {
 	proof := s.BuildProof(sk.PPrime, sk.QPrime)
 
 	// And write it to file
+	follower.StepStart("Writing proof", 0)
 	proofEncoder := json.NewEncoder(proofFile)
 	proofEncoder.Encode(proof)
+	follower.StepDone()
 }
 
 func verifyProof(pkfilename, prooffilename string) {
+	// Try to read public key
+	pk, err := gabi.NewPublicKeyFromFile(pkfilename)
+	if err != nil {
+		fmt.Printf("Error reading in public key: %s\n", err.Error())
+		return
+	}
+	
 	// Try to read proof
+	follower.StepStart("Reading proofdata", 0)
 	proofFile, err := os.Open(prooffilename)
 	if err != nil {
-		fmt.Printf("Error opening proof: %s\n", err.Error())
+		follower.StepDone()
+		follower.FinalEvents <- SetFinalMessage{fmt.Sprintf("Error opening proof: %s\n", err.Error())}
 		return
 	}
 	defer proofFile.Close()
@@ -112,27 +203,24 @@ func verifyProof(pkfilename, prooffilename string) {
 	var proof primeproofs.SafePrimeProof
 	err = proofDecoder.Decode(&proof)
 	if err != nil {
-		fmt.Printf("Error reading in proof data: %s\n", err.Error())
+		follower.StepDone()
+		follower.FinalEvents <- SetFinalMessage{fmt.Sprintf("Error reading in proof data: %s\n", err.Error())}
 		return
 	}
-
-	// Try to read public key
-	pk, err := gabi.NewPublicKeyFromFile(pkfilename)
-	if err != nil {
-		fmt.Printf("Error reading in public key: %s\n", err.Error())
-		return
-	}
+	follower.StepDone()
 
 	// Construct proof structure
 	s := primeproofs.NewSafePrimeProofStructure(pk.N)
 
 	// And use it to validate the proof
 	if !s.VerifyProof(proof) {
-		fmt.Printf("Proof is INVALID!\n")
+		follower.FinalEvents <- SetFinalMessage{"Proof is INVALID!"}
 	} else {
-		fmt.Printf("Proof is valid\n")
+		follower.FinalEvents <- SetFinalMessage{"Proof is valid"}
 	}
 }
+
+var follower *LogFollower
 
 func main() {
 	if len(os.Args) != 4 {
@@ -140,7 +228,11 @@ func main() {
 		return
 	}
 	
-	primeproofs.Follower = &LogFollower{}
+	follower = StartLogFollower()
+	defer func() {
+		follower.QuitEvents <- QuitMessage{}
+		<- follower.Finished
+	}()
 
 	if os.Args[1] == "buildproof" {
 		buildProof(os.Args[2], os.Args[3])
