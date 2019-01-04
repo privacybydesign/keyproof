@@ -6,10 +6,10 @@ type ProgressFollower interface {
 	StepDone()
 }
 
-type EmptyFollower struct {}
+type EmptyFollower struct{}
 
 func (_ *EmptyFollower) StepStart(desc string, intermediates int) {}
-func (_ *EmptyFollower) Tick() {}
-func (_ *EmptyFollower) StepDone() {}
+func (_ *EmptyFollower) Tick()                                    {}
+func (_ *EmptyFollower) StepDone()                                {}
 
 var Follower ProgressFollower = &EmptyFollower{}

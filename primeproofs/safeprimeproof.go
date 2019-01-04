@@ -255,9 +255,9 @@ func (s *SafePrimeProofStructure) VerifyProof(proof SafePrimeProof) bool {
 	list = s.PprimeIsPrime.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs, proof.PprimeIsPrimeProof)
 	list = s.QprimeIsPrime.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs, proof.QprimeIsPrimeProof)
 	list = qspp.QuasiSafePrimeProductExtractCommitments(list, proof.QSPPproof)
-	
+
 	Follower.StepDone()
-	
+
 	Follower.StepStart("Verifying proof", 0)
 	defer Follower.StepDone()
 
