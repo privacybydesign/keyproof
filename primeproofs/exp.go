@@ -383,10 +383,6 @@ func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 	// steps
 	commit.interStepsCommit = []expStepCommit{}
 	for i, _ := range s.interSteps {
-		if !s.interSteps[i].IsTrue(&innerSecrets) {
-			fmt.Printf("%v %v %v %v %v\n", commit.expBitPederson[i].secret, commit.interResPederson[i-1].secret, commit.interResPederson[i].secret, commit.basePowPederson[i].secret, secretdata.GetSecret(s.mod))
-			panic(fmt.Sprintf("aah %v", i))
-		}
 		var ec expStepCommit
 		list, ec = s.interSteps[i].GenerateCommitmentsFromSecrets(g, list, &innerBases, &innerSecrets)
 		commit.interStepsCommit = append(commit.interStepsCommit, ec)
