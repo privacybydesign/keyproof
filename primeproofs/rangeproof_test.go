@@ -56,13 +56,7 @@ func TestRangeProofBasic(t *testing.T) {
 		return
 	}
 
-	var logCount = 0
-	RangeProofLog = func() {
-		logCount++
-	}
-	defer func() {
-		RangeProofLog = func() {}
-	}()
+	Follower.(*TestFollower).count = 0
 
 	var s RangeProofStructure
 	s.Lhs = []LhsContribution{
@@ -94,10 +88,10 @@ func TestRangeProofBasic(t *testing.T) {
 
 	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
-	logCount = 0
+	Follower.(*TestFollower).count = 0
 
 	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
 
@@ -108,7 +102,7 @@ func TestRangeProofBasic(t *testing.T) {
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
@@ -124,13 +118,7 @@ func TestRangeProofComplex(t *testing.T) {
 		return
 	}
 
-	var logCount = 0
-	RangeProofLog = func() {
-		logCount++
-	}
-	defer func() {
-		RangeProofLog = func() {}
-	}()
+	Follower.(*TestFollower).count = 0
 
 	var s RangeProofStructure
 	s.Lhs = []LhsContribution{
@@ -167,10 +155,10 @@ func TestRangeProofComplex(t *testing.T) {
 
 	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
-	logCount = 0
+	Follower.(*TestFollower).count = 0
 
 	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
 
@@ -181,7 +169,7 @@ func TestRangeProofComplex(t *testing.T) {
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 

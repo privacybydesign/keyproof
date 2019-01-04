@@ -35,8 +35,6 @@ func (r *RangeCommitSecretLookup) GetRandomizer(name string) *big.Int {
 	return clist[r.i]
 }
 
-var RangeProofLog func() = func() {}
-
 func (s *RangeProofStructure) NumRangeProofs() int {
 	return 1
 }
@@ -76,7 +74,7 @@ func (s *RangeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*bi
 	}
 
 	// Call the logger
-	RangeProofLog()
+	Follower.Tick()
 
 	// Return the result
 	return list, commit.RangeCommit
@@ -214,7 +212,7 @@ func (s *RangeProofStructure) GenerateCommitmentsFromProof(g group, list []*big.
 		list = s.RepresentationProofStructure.GenerateCommitmentsFromProof(g, list, big.NewInt(int64(challenge.Bit(i))), bases, &resultLookup)
 	}
 
-	RangeProofLog()
+	Follower.Tick()
 
 	return list
 }

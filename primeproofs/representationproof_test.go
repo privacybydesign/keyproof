@@ -55,13 +55,7 @@ func TestRepresentationProofBasics(t *testing.T) {
 		return
 	}
 
-	var logCount = 0
-	RangeProofLog = func() {
-		logCount++
-	}
-	defer func() {
-		RangeProofLog = func() {}
-	}()
+	Follower.(*TestFollower).count = 0
 
 	var s RepresentationProofStructure
 	s.Lhs = []LhsContribution{
@@ -85,14 +79,14 @@ func TestRepresentationProofBasics(t *testing.T) {
 
 	listSecrets := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
-	logCount = 0
+	Follower.(*TestFollower).count = 0
 
 	listProofs := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(1), &bases, &proof)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
@@ -127,13 +121,7 @@ func TestRepresentationProofComplex(t *testing.T) {
 		RhsContribution{"h", "y", 1},
 	}
 
-	var logCount = 0
-	RangeProofLog = func() {
-		logCount++
-	}
-	defer func() {
-		RangeProofLog = func() {}
-	}()
+	Follower.(*TestFollower).count = 0
 
 	var secret RepTestSecret
 	secret.secrets = map[string]*big.Int{
@@ -164,14 +152,14 @@ func TestRepresentationProofComplex(t *testing.T) {
 
 	listSecrets := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
-	logCount = 0
+	Follower.(*TestFollower).count = 0
 
 	listProofs := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(2), &bases, &proof)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 

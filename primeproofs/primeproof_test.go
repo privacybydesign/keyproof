@@ -11,13 +11,7 @@ func TestPrimeProofFlow(t *testing.T) {
 		return
 	}
 
-	var logCount = 0
-	RangeProofLog = func() {
-		logCount++
-	}
-	defer func() {
-		RangeProofLog = func() {}
-	}()
+	Follower.(*TestFollower).count = 0
 
 	s := newPrimeProofStructure("p", 4)
 
@@ -27,10 +21,10 @@ func TestPrimeProofFlow(t *testing.T) {
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &pCommit)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
-	logCount = 0
+	Follower.(*TestFollower).count = 0
 
 	proof := s.BuildProof(g, big.NewInt(12345), commit, &pCommit)
 	pProof := pCommit.BuildProof(g, big.NewInt(12345))
@@ -45,7 +39,7 @@ func TestPrimeProofFlow(t *testing.T) {
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &pProof, proof)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 

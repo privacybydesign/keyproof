@@ -7,17 +7,57 @@ import "encoding/json"
 import "fmt"
 import "os"
 
+type LogFollower struct {
+	status string
+	limit  int
+	count  int
+	done   bool
+}
+
+func (l *LogFollower) PrintStatus() {
+	var tail string
+	if l.done {
+		tail = "done"
+	} else if l.limit > 0 {
+		tail = fmt.Sprintf("%v/%v", l.count, l.limit)
+	} else {
+		tail = ""
+	}
+	
+	tlen := len(tail)
+	if tlen == 0 {
+		tlen = 4
+	}
+	
+	fmt.Printf("\r%s", l.status)
+	for i := 0; i < 60-len(l.status) - tlen; i++ {
+		fmt.Printf(".")
+	}
+	fmt.Printf("%s", tail)
+}
+
+func (l *LogFollower) StepStart(desc string, intermediates int) {
+	l.limit = intermediates
+	l.count = 0
+	l.status = desc
+	l.done = false
+	l.PrintStatus()
+}
+
+func (l *LogFollower) Tick() {
+	l.count++
+	l.PrintStatus()
+}
+
+func (l *LogFollower) StepDone() {
+	l.done = true
+	l.PrintStatus()
+	fmt.Printf("\n")
+}
+
 func printHelp() {
 	fmt.Printf("Usage: keyproof [action] [keyfile] [prooffile]\n")
 	fmt.Printf("Possible actions: buildproof, verify\n")
-}
-
-var progMax = 0
-var progCount = 0
-
-func LogTick() {
-	progCount++
-	fmt.Printf("\r%v/%v", progCount, progMax)
 }
 
 func buildProof(skfilename, prooffilename string) {
@@ -53,8 +93,6 @@ func buildProof(skfilename, prooffilename string) {
 	// Build the proof
 	N := new(big.Int).Mul(sk.P, sk.Q)
 	s := primeproofs.NewSafePrimeProofStructure(N)
-	progMax = s.NumRangeProofs()
-	primeproofs.RangeProofLog = LogTick
 	proof := s.BuildProof(sk.PPrime, sk.QPrime)
 
 	// And write it to file
@@ -87,8 +125,6 @@ func verifyProof(pkfilename, prooffilename string) {
 
 	// Construct proof structure
 	s := primeproofs.NewSafePrimeProofStructure(pk.N)
-	progMax = s.NumRangeProofs()
-	primeproofs.RangeProofLog = LogTick
 
 	// And use it to validate the proof
 	if !s.VerifyProof(proof) {
@@ -103,6 +139,8 @@ func main() {
 		printHelp()
 		return
 	}
+	
+	primeproofs.Follower = &LogFollower{}
 
 	if os.Args[1] == "buildproof" {
 		buildProof(os.Args[2], os.Args[3])

@@ -11,13 +11,7 @@ func TestExpStepFlowA(t *testing.T) {
 		return
 	}
 
-	var logCount = 0
-	RangeProofLog = func() {
-		logCount++
-	}
-	defer func() {
-		RangeProofLog = func() {}
-	}()
+	Follower.(*TestFollower).count = 0
 
 	bitPederson := newPedersonSecret(g, "bit", big.NewInt(0))
 	prePederson := newPedersonSecret(g, "pre", big.NewInt(2))
@@ -36,10 +30,10 @@ func TestExpStepFlowA(t *testing.T) {
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
-	logCount = 0
+	Follower.(*TestFollower).count = 0
 
 	proof := s.BuildProof(g, big.NewInt(12345), commit, &secrets)
 
@@ -63,7 +57,7 @@ func TestExpStepFlowA(t *testing.T) {
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, proof)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 

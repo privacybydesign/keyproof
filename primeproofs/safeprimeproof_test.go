@@ -8,25 +8,19 @@ func TestSafePrimeProof(t *testing.T) {
 	const p = 26903
 	const q = 27803
 
-	var logCount = 0
-	RangeProofLog = func() {
-		logCount++
-	}
-	defer func() {
-		RangeProofLog = func() {}
-	}()
+	Follower.(*TestFollower).count = 0
 
 	s := NewSafePrimeProofStructure(big.NewInt(p * q))
 	proof := s.BuildProof(big.NewInt((p-1)/2), big.NewInt((q-1)/2))
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
-	logCount = 0
+	Follower.(*TestFollower).count = 0
 
 	ok := s.VerifyProof(proof)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 

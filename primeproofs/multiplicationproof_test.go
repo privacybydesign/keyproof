@@ -11,13 +11,7 @@ func TestMultiplicationProofFlow(t *testing.T) {
 		return
 	}
 
-	var logCount = 0
-	RangeProofLog = func() {
-		logCount++
-	}
-	defer func() {
-		RangeProofLog = func() {}
-	}()
+	Follower.(*TestFollower).count = 0
 
 	const a = 2
 	const b = 3
@@ -39,10 +33,10 @@ func TestMultiplicationProofFlow(t *testing.T) {
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
-	logCount = 0
+	Follower.(*TestFollower).count = 0
 
 	proof := s.BuildProof(g, big.NewInt(12345), commit, &secrets)
 	m1proof := m1.BuildProof(g, big.NewInt(12345))
@@ -64,7 +58,7 @@ func TestMultiplicationProofFlow(t *testing.T) {
 
 	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &proofdata, proof)
 
-	if logCount != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.NumRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
