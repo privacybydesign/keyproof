@@ -1,7 +1,7 @@
 package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 import "strings"
 
 type MultiplicationProofStructure struct {
@@ -79,8 +79,8 @@ func (s *MultiplicationProofStructure) NumRangeProofs() int {
 }
 
 func (s *MultiplicationProofStructure) NumCommitments() int {
-	return s.multRepresentation.NumCommitments() + 
-		s.modMultRepresentation.NumCommitments() + 
+	return s.multRepresentation.NumCommitments() +
+		s.modMultRepresentation.NumCommitments() +
 		s.modMultRange.NumCommitments() +
 		1
 }

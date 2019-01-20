@@ -1,7 +1,7 @@
 package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 import "strings"
 
 type PedersonSecret struct {
@@ -59,8 +59,8 @@ func newPedersonSecret(g group, name string, value *big.Int) PedersonSecret {
 	result.hiderRandomizer = common.RandomBigInt(g.order)
 	result.commit = new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(g.g, result.secret, g.P),
-			new(big.Int).Exp(g.h, result.hider, g.P)),
+			g.Exp("g", result.secret, g.P),
+			g.Exp("h", result.hider, g.P)),
 		g.P)
 	return result
 }
@@ -69,8 +69,8 @@ func newPedersonFakeProof(g group) PedersonProof {
 	var result PedersonProof
 	result.Commit = new(big.Int).Mod(
 		new(big.Int).Mul(
-			new(big.Int).Exp(g.g, common.RandomBigInt(g.order), g.P),
-			new(big.Int).Exp(g.h, common.RandomBigInt(g.order), g.P)),
+			g.Exp("g", common.RandomBigInt(g.order), g.P),
+			g.Exp("h", common.RandomBigInt(g.order), g.P)),
 		g.P)
 	result.Sresult = common.RandomBigInt(g.order)
 	result.Hresult = common.RandomBigInt(g.order)
@@ -108,7 +108,13 @@ func (s *PedersonSecret) GetRandomizer(name string) *big.Int {
 	}
 	return nil
 }
-
+func (c *PedersonSecret) Exp(name string, exp, P *big.Int) *big.Int {
+	base := c.GetBase(name)
+	if base == nil {
+		return nil
+	}
+	return new(big.Int).Exp(base, exp, P)
+}
 func (c *PedersonSecret) GetBase(name string) *big.Int {
 	if name == c.name {
 		return c.commit
@@ -127,6 +133,14 @@ func (p *PedersonProof) GenerateCommitments(list []*big.Int) []*big.Int {
 
 func (p *PedersonProof) VerifyStructure() bool {
 	return p.Commit != nil && p.Sresult != nil && p.Hresult != nil
+}
+
+func (p *PedersonProof) Exp(name string, exp, P *big.Int) *big.Int {
+	base := p.GetBase(name)
+	if base == nil {
+		return nil
+	}
+	return new(big.Int).Exp(base, exp, P)
 }
 
 func (p *PedersonProof) GetBase(name string) *big.Int {

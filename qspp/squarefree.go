@@ -1,7 +1,7 @@
 package qspp
 
 import "github.com/privacybydesign/keyproof/common"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 type SquareFreeProof struct {
 	Responses []*big.Int

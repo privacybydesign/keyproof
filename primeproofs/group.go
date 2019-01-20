@@ -1,12 +1,17 @@
 package primeproofs
 
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
+
+import "github.com/bwesterb/go-exptable"
 
 type group struct {
 	P     *big.Int
 	order *big.Int
 	g     *big.Int
 	h     *big.Int
+
+	gTable exptable.Table
+	hTable exptable.Table
 }
 
 func buildGroup(prime *big.Int) (group, bool) {
@@ -25,6 +30,9 @@ func buildGroup(prime *big.Int) (group, bool) {
 
 	result.g = new(big.Int).Exp(big.NewInt(0x41424344), big.NewInt(0x45464748), result.P)
 	result.h = new(big.Int).Exp(big.NewInt(0x494A4B4C), big.NewInt(0x4D4E4F50), result.P)
+
+	result.gTable.Compute(result.g.Value(), result.P.Value(), 7)
+	result.hTable.Compute(result.h.Value(), result.P.Value(), 7)
 
 	return result, true
 }

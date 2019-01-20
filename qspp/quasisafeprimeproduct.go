@@ -1,6 +1,6 @@
 package qspp
 
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 type QuasiSafePrimeProductCommit struct {
 	asppCommit AlmostSafePrimeProductCommit

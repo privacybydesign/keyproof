@@ -1,9 +1,11 @@
 package primeproofs
 
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
+import "github.com/bwesterb/go-exptable"
 
 type BaseLookup interface {
 	GetBase(name string) *big.Int
+	Exp(name string, exp, P *big.Int) *big.Int
 }
 
 type SecretLookup interface {
@@ -13,6 +15,22 @@ type SecretLookup interface {
 
 type ProofLookup interface {
 	GetResult(name string) *big.Int
+}
+
+func (g *group) Exp(name string, exp, P *big.Int) *big.Int {
+	var table *exptable.Table
+	var ret big.Int
+	if name == "g" {
+		table = &g.gTable
+	} else if name == "h" {
+		table = &g.hTable
+	} else {
+		return nil
+	}
+	var exp2 big.Int
+	exp2.Mod(exp, g.order)
+	table.Exp(ret.Value(), exp2.Value())
+	return &ret
 }
 
 func (g *group) GetBase(name string) *big.Int {
@@ -38,6 +56,16 @@ func newBaseMerge(parts ...BaseLookup) BaseMerge {
 func (b *BaseMerge) GetBase(name string) *big.Int {
 	for _, part := range b.parts {
 		res := part.GetBase(name)
+		if res != nil {
+			return res
+		}
+	}
+	return nil
+}
+
+func (b *BaseMerge) Exp(name string, exp, P *big.Int) *big.Int {
+	for _, part := range b.parts {
+		res := part.Exp(name, exp, P)
 		if res != nil {
 			return res
 		}

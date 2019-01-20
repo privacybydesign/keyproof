@@ -1,7 +1,7 @@
 package common
 
 import "crypto/rand"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 // Often we need to refer to the same small constant big numbers, no point in
 // creating them again and again.

@@ -3,7 +3,7 @@ package qspp
 import "testing"
 import "encoding/json"
 import "github.com/privacybydesign/keyproof/common"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 func TestQuasiSafePrimeProductCycle(t *testing.T) {
 	const p = 13451

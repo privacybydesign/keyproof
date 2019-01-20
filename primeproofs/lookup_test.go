@@ -1,7 +1,7 @@
 package primeproofs
 
 import "testing"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 func TestGroupAsLookupBase(t *testing.T) {
 	const p = 26903
@@ -41,6 +41,10 @@ func (m *TestLookup) GetValue(name string) *big.Int {
 
 func (m *TestLookup) GetBase(name string) *big.Int {
 	return m.GetValue(name)
+}
+func (m *TestLookup) Exp(name string, exp, P *big.Int) *big.Int {
+	base := m.GetBase(name)
+	return new(big.Int).Exp(base, exp, P)
 }
 func (m *TestLookup) GetSecret(name string) *big.Int {
 	return m.GetValue(name)

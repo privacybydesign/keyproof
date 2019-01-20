@@ -1,7 +1,7 @@
 package common
 
 import "testing"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 func TestLegendre(t *testing.T) {
 	primes := []*big.Int{

@@ -2,7 +2,7 @@ package common
 
 import "crypto/sha256"
 import "encoding/asn1"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 import gobig "math/big"
 
 func HashCommit(values []*big.Int) *big.Int {

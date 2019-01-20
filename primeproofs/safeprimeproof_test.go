@@ -2,7 +2,7 @@ package primeproofs
 
 import "testing"
 import "encoding/json"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 func TestSafePrimeProof(t *testing.T) {
 	const p = 26903

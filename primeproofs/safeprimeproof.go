@@ -2,8 +2,8 @@ package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
 import "github.com/privacybydesign/keyproof/qspp"
-import "github.com/mhe/gabi/big"
-import "github.com/mhe/gabi/safeprime"
+import "github.com/privacybydesign/gabi/big"
+import "github.com/privacybydesign/gabi/safeprime"
 
 type SafePrimeProofStructure struct {
 	N          *big.Int

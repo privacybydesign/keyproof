@@ -1,7 +1,7 @@
 package qspp
 
 import "testing"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 func TestAlmostSafePrimeProductCycle(t *testing.T) {
 	const p = 13451
