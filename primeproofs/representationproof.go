@@ -52,8 +52,12 @@ func (s *RepresentationProofStructure) GenerateCommitmentsFromProof(g group, lis
 
 	commitment := new(big.Int).Exp(lhs, challenge, g.P)
 	for _, curRhs := range s.Rhs {
-		base := bases.Exp(curRhs.Base, big.NewInt(curRhs.Power), g.P)
-		contribution := new(big.Int).Exp(base, proofdata.GetResult(curRhs.Secret), g.P)
+		// base := bases.Exp(curRhs.Base, big.NewInt(curRhs.Power), g.P)
+		// contribution := new(big.Int).Exp(base, proofdata.GetResult(curRhs.Secret), g.P)
+		var exp big.Int
+		exp.Mul(big.NewInt(curRhs.Power), proofdata.GetResult(curRhs.Secret))
+		exp.Mod(&exp, g.order)
+		contribution := bases.Exp(curRhs.Base, &exp, g.P)
 		commitment.Mod(new(big.Int).Mul(commitment, contribution), g.P)
 	}
 
