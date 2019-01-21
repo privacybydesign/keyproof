@@ -14,6 +14,11 @@ type ConvenientSafePrime struct {
 
 var convenientSafePrimes = []ConvenientSafePrime{
 	{787, 7341},
+	{836, 12077},
+	{912, 7577},
+	{933, 6249},
+	{985, 3645},
+	{1008, 3317},
 	{1259, 2505},
 	{1307, 4425},
 	{1503, 1629},
