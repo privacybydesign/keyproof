@@ -1,9 +1,13 @@
 package primeproofs
 
-import "github.com/privacybydesign/keyproof/common"
-import "github.com/privacybydesign/gabi/big"
-import "strings"
-import "fmt"
+import (
+	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/keyproof/common"
+
+	"fmt"
+	"strings"
+	"sync"
+)
 
 type expProofStructure struct {
 	base     string
@@ -364,27 +368,24 @@ func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 	innerSecrets := newSecretMerge(secretList...)
 
 	// Generate commitment list
-	waitCount := 0
-	doneChannel := make(chan struct{}, 10*s.bitlen)
-	readyChannel := make(chan struct{}, 10*s.bitlen)
+	var wg sync.WaitGroup
 
 	// bits
 	for i, _ := range commit.expBitPederson {
 		list = commit.expBitPederson[i].GenerateCommitments(list)
 	}
 	for i, _ := range s.expBitRep {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.expBitRep[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.expBitRep[ic].GenerateCommitmentsFromSecrets(g, []*big.Int{}, &innerBases, &innerSecrets)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 	list = s.expBitEq.GenerateCommitmentsFromSecrets(g, list, &innerBases, &innerSecrets)
@@ -394,23 +395,22 @@ func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 		list = commit.basePowPederson[i].GenerateCommitments(list)
 	}
 	for i, _ := range s.basePowRep {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.expBitRep[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.basePowRep[ic].GenerateCommitmentsFromSecrets(g, []*big.Int{}, &innerBases, &innerSecrets)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 	commit.basePowRangeCommit = make([]RangeCommit, 0, len(s.basePowRange))
 	for i, _ := range s.basePowRange {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.basePowRange[i].NumCommitments())...)
 		ic := i
@@ -419,17 +419,16 @@ func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 		go func() {
 			var loc []*big.Int
 			loc, commit.basePowRangeCommit[commitOff] = s.basePowRange[ic].GenerateCommitmentsFromSecrets(g, []*big.Int{}, &innerBases, &innerSecrets)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 	commit.basePowRelCommit = make([]MultiplicationProofCommit, 0, len(s.basePowRels))
 	for i, _ := range s.basePowRels {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.basePowRels[i].NumCommitments())...)
 		ic := i
@@ -438,12 +437,11 @@ func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 		go func() {
 			var loc []*big.Int
 			loc, commit.basePowRelCommit[commitOff] = s.basePowRels[ic].GenerateCommitmentsFromSecrets(g, []*big.Int{}, &innerBases, &innerSecrets)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 
@@ -456,23 +454,22 @@ func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 		list = commit.interResPederson[i].GenerateCommitments(list)
 	}
 	for i, _ := range s.interResRep {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.interResRep[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.interResRep[ic].GenerateCommitmentsFromSecrets(g, []*big.Int{}, &innerBases, &innerSecrets)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 	commit.interResRangeCommit = make([]RangeCommit, 0, len(s.interResRange))
 	for i, _ := range s.interResRange {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.interResRange[i].NumCommitments())...)
 		ic := i
@@ -481,19 +478,18 @@ func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 		go func() {
 			var loc []*big.Int
 			loc, commit.interResRangeCommit[commitOff] = s.interResRange[ic].GenerateCommitmentsFromSecrets(g, []*big.Int{}, &innerBases, &innerSecrets)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 
 	// steps
 	commit.interStepsCommit = []expStepCommit{}
 	for i, _ := range s.interSteps {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.interSteps[i].NumCommitments())...)
 		ic := i
@@ -502,24 +498,15 @@ func (s *expProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.
 		go func() {
 			var loc []*big.Int
 			loc, commit.interStepsCommit[commitOff] = s.interSteps[ic].GenerateCommitmentsFromSecrets(g, []*big.Int{}, &innerBases, &innerSecrets)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 
-	for i := 0; i < waitCount; i++ {
-		readyChannel <- struct{}{}
-	}
-
-	// Wait for finish
-	for waitCount > 0 {
-		<-doneChannel
-		waitCount--
-	}
+	wg.Wait()
 
 	return list, commit
 }
@@ -720,27 +707,24 @@ func (s *expProofStructure) GenerateCommitmentsFromProof(g group, list []*big.In
 	innerProof := newProofMerge(proofList...)
 
 	// Generate commitment list
-	waitCount := 0
-	doneChannel := make(chan struct{}, 10*s.bitlen)
-	readyChannel := make(chan struct{}, 10*s.bitlen)
+	var wg sync.WaitGroup
 
 	// bit
 	for i, _ := range proof.ExpBitProofs {
 		list = proof.ExpBitProofs[i].GenerateCommitments(list)
 	}
 	for i, _ := range s.expBitRep {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.expBitRep[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.expBitRep[ic].GenerateCommitmentsFromProof(g, []*big.Int{}, challenge, &innerBases, &innerProof)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 	list = s.expBitEq.GenerateCommitmentsFromProof(g, list, challenge, &innerBases, &innerProof)
@@ -750,48 +734,45 @@ func (s *expProofStructure) GenerateCommitmentsFromProof(g group, list []*big.In
 		list = proof.BasePowProofs[i].GenerateCommitments(list)
 	}
 	for i, _ := range s.basePowRep {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.basePowRep[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.basePowRep[ic].GenerateCommitmentsFromProof(g, []*big.Int{}, challenge, &innerBases, &innerProof)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 	for i, _ := range s.basePowRange {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.basePowRange[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.basePowRange[ic].GenerateCommitmentsFromProof(g, []*big.Int{}, challenge, &innerBases, proof.BasePowRangeProofs[ic])
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 	for i, _ := range s.basePowRels {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.basePowRels[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.basePowRels[ic].GenerateCommitmentsFromProof(g, []*big.Int{}, challenge, &innerBases, &innerProof, proof.BasePowRelProofs[ic])
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 
@@ -804,61 +785,51 @@ func (s *expProofStructure) GenerateCommitmentsFromProof(g group, list []*big.In
 		list = proof.InterResProofs[i].GenerateCommitments(list)
 	}
 	for i, _ := range s.interResRep {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.interResRep[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.interResRep[ic].GenerateCommitmentsFromProof(g, []*big.Int{}, challenge, &innerBases, &innerProof)
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 	for i, _ := range s.interResRange {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.interResRange[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.interResRange[ic].GenerateCommitmentsFromProof(g, []*big.Int{}, challenge, &innerBases, proof.InterResRangeProofs[ic])
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 
 	// steps
 	for i, _ := range s.interSteps {
-		waitCount++
+		wg.Add(1)
 		curOff := len(list)
 		list = append(list, make([]*big.Int, s.interSteps[i].NumCommitments())...)
 		ic := i
 		go func() {
 			loc := s.interSteps[ic].GenerateCommitmentsFromProof(g, []*big.Int{}, challenge, &innerBases, proof.InterStepsProofs[ic])
-			<-readyChannel
 			for _, v := range loc {
 				list[curOff] = v
 				curOff++
 			}
-			doneChannel <- struct{}{}
+			wg.Done()
 		}()
 	}
 
-	for i := 0; i < waitCount; i++ {
-		readyChannel <- struct{}{}
-	}
-
-	for waitCount > 0 {
-		<-doneChannel
-		waitCount--
-	}
+	wg.Wait()
 
 	return list
 }
