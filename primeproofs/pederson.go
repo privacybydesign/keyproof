@@ -12,6 +12,8 @@ type PedersonSecret struct {
 	hider            *big.Int
 	hiderRandomizer  *big.Int
 	commit           *big.Int
+
+	g *group
 }
 
 type PedersonProof struct {
@@ -63,6 +65,7 @@ func newPedersonSecret(g group, name string, value *big.Int) PedersonSecret {
 	result.commit = new(big.Int)
 	result.commit.Mul(&gCommit, &hCommit)
 	result.commit.Mod(result.commit, g.P)
+	result.g = &g
 	return result
 }
 
@@ -111,11 +114,20 @@ func (s *PedersonSecret) GetRandomizer(name string) *big.Int {
 	return nil
 }
 func (c *PedersonSecret) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
-	base := c.GetBase(name)
-	if base == nil {
+	if name != c.name {
 		return false
 	}
-	ret.Exp(base, exp, P)
+	// We effectively compute c.commit^exp, which is more expensive to do
+	// directly, than with two table-backed exponentiations.
+	var exp1, exp2, ret1, ret2 big.Int
+	exp1.Mul(c.secret, exp)
+	exp1.Mod(&exp1, c.g.order)
+	exp2.Mul(c.hider, exp)
+	exp2.Mod(&exp2, c.g.order)
+	c.g.Exp(&ret1, "g", &exp1, c.g.P)
+	c.g.Exp(&ret2, "h", &exp2, c.g.P)
+	ret.Mul(&ret1, &ret2)
+	ret.Mod(ret, P)
 	return true
 }
 func (c *PedersonSecret) GetBase(name string) *big.Int {
