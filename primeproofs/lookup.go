@@ -1,7 +1,11 @@
 package primeproofs
 
-import "github.com/privacybydesign/gabi/big"
-import "github.com/bwesterb/go-exptable"
+import (
+	"github.com/bwesterb/go-exptable"
+	"github.com/privacybydesign/gabi/big"
+
+	"fmt"
+)
 
 type BaseLookup interface {
 	GetBase(name string) *big.Int
@@ -27,8 +31,15 @@ func (g *group) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 		return false
 	}
 	var exp2 big.Int
-	exp2.Mod(exp, g.order)
-	table.Exp(ret.Value(), exp2.Value())
+	if exp.Sign() == -1 {
+		exp2.Add(exp, g.order)
+		exp = &exp2
+	}
+	if exp.Cmp(g.order) >= 0 {
+		panic(fmt.Sprintf("scalar out of bounds: %v %v", exp, g.order))
+	}
+	// exp2.Mod(exp, g.order)
+	table.Exp(ret.Value(), exp.Value())
 	return true
 }
 
