@@ -36,9 +36,10 @@ func (rc *RangeTestCommit) GetBase(name string) *big.Int {
 	}
 	return nil
 }
-func (rc *RangeTestCommit) Exp(name string, exp, P *big.Int) *big.Int {
+func (rc *RangeTestCommit) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	base := rc.GetBase(name)
-	return new(big.Int).Exp(base, exp, P)
+	ret.Exp(base, exp, P)
+	return true
 }
 
 func listCmp(a []*big.Int, b []*big.Int) bool {

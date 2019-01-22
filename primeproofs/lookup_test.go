@@ -42,9 +42,10 @@ func (m *TestLookup) GetValue(name string) *big.Int {
 func (m *TestLookup) GetBase(name string) *big.Int {
 	return m.GetValue(name)
 }
-func (m *TestLookup) Exp(name string, exp, P *big.Int) *big.Int {
+func (m *TestLookup) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	base := m.GetBase(name)
-	return new(big.Int).Exp(base, exp, P)
+	ret.Exp(base, exp, P)
+	return true
 }
 func (m *TestLookup) GetSecret(name string) *big.Int {
 	return m.GetValue(name)

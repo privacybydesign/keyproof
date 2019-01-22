@@ -47,9 +47,10 @@ func (rc *RepTestCommit) GetBase(name string) *big.Int {
 	}
 	return nil
 }
-func (rc *RepTestCommit) Exp(name string, exp, P *big.Int) *big.Int {
+func (rc *RepTestCommit) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	base := rc.GetBase(name)
-	return new(big.Int).Exp(base, exp, P)
+	ret.Exp(base, exp, P)
+	return true
 }
 
 func TestRepresentationProofBasics(t *testing.T) {

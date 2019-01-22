@@ -5,7 +5,7 @@ import "github.com/bwesterb/go-exptable"
 
 type BaseLookup interface {
 	GetBase(name string) *big.Int
-	Exp(name string, exp, P *big.Int) *big.Int
+	Exp(ret *big.Int, name string, exp, P *big.Int) bool
 }
 
 type SecretLookup interface {
@@ -17,20 +17,19 @@ type ProofLookup interface {
 	GetResult(name string) *big.Int
 }
 
-func (g *group) Exp(name string, exp, P *big.Int) *big.Int {
+func (g *group) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	var table *exptable.Table
-	var ret big.Int
 	if name == "g" {
 		table = &g.gTable
 	} else if name == "h" {
 		table = &g.hTable
 	} else {
-		return nil
+		return false
 	}
 	var exp2 big.Int
 	exp2.Mod(exp, g.order)
 	table.Exp(ret.Value(), exp2.Value())
-	return &ret
+	return true
 }
 
 func (g *group) GetBase(name string) *big.Int {
@@ -63,14 +62,14 @@ func (b *BaseMerge) GetBase(name string) *big.Int {
 	return nil
 }
 
-func (b *BaseMerge) Exp(name string, exp, P *big.Int) *big.Int {
+func (b *BaseMerge) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	for _, part := range b.parts {
-		res := part.Exp(name, exp, P)
-		if res != nil {
-			return res
+		ok := part.Exp(ret, name, exp, P)
+		if ok {
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
 type SecretMerge struct {

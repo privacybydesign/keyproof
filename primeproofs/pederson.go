@@ -57,21 +57,23 @@ func newPedersonSecret(g group, name string, value *big.Int) PedersonSecret {
 	result.secretRandomizer = common.RandomBigInt(g.order)
 	result.hider = common.RandomBigInt(g.order)
 	result.hiderRandomizer = common.RandomBigInt(g.order)
-	result.commit = new(big.Int).Mod(
-		new(big.Int).Mul(
-			g.Exp("g", result.secret, g.P),
-			g.Exp("h", result.hider, g.P)),
-		g.P)
+	var gCommit, hCommit big.Int
+	g.Exp(&gCommit, "g", result.secret, g.P)
+	g.Exp(&hCommit, "h", result.hider, g.P)
+	result.commit = new(big.Int)
+	result.commit.Mul(&gCommit, &hCommit)
+	result.commit.Mod(result.commit, g.P)
 	return result
 }
 
 func newPedersonFakeProof(g group) PedersonProof {
 	var result PedersonProof
-	result.Commit = new(big.Int).Mod(
-		new(big.Int).Mul(
-			g.Exp("g", common.RandomBigInt(g.order), g.P),
-			g.Exp("h", common.RandomBigInt(g.order), g.P)),
-		g.P)
+	var gCommit, hCommit big.Int
+	g.Exp(&gCommit, "g", common.RandomBigInt(g.order), g.P)
+	g.Exp(&hCommit, "h", common.RandomBigInt(g.order), g.P)
+	result.Commit = new(big.Int)
+	result.Commit.Mul(&gCommit, &hCommit)
+	result.Commit.Mod(result.Commit, g.P)
 	result.Sresult = common.RandomBigInt(g.order)
 	result.Hresult = common.RandomBigInt(g.order)
 	return result
@@ -108,12 +110,13 @@ func (s *PedersonSecret) GetRandomizer(name string) *big.Int {
 	}
 	return nil
 }
-func (c *PedersonSecret) Exp(name string, exp, P *big.Int) *big.Int {
+func (c *PedersonSecret) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	base := c.GetBase(name)
 	if base == nil {
-		return nil
+		return false
 	}
-	return new(big.Int).Exp(base, exp, P)
+	ret.Exp(base, exp, P)
+	return true
 }
 func (c *PedersonSecret) GetBase(name string) *big.Int {
 	if name == c.name {
@@ -135,12 +138,13 @@ func (p *PedersonProof) VerifyStructure() bool {
 	return p.Commit != nil && p.Sresult != nil && p.Hresult != nil
 }
 
-func (p *PedersonProof) Exp(name string, exp, P *big.Int) *big.Int {
+func (p *PedersonProof) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	base := p.GetBase(name)
 	if base == nil {
-		return nil
+		return false
 	}
-	return new(big.Int).Exp(base, exp, P)
+	ret.Exp(base, exp, P)
+	return true
 }
 
 func (p *PedersonProof) GetBase(name string) *big.Int {
