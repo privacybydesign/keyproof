@@ -244,7 +244,7 @@ func (s *SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) S
 func (s *SafePrimeProofStructure) VerifyProof(proof SafePrimeProof) bool {
 	// Check proof structure
 	Follower.StepStart("Verifying structure", 0)
-	if proof.GroupPrime == nil || proof.GroupPrime.BitLen() != s.N.BitLen()+2*rangeProofEpsilon+10 {
+	if proof.GroupPrime == nil || proof.GroupPrime.BitLen() < s.N.BitLen()+2*rangeProofEpsilon+10 {
 		return false
 	}
 	if !proof.GroupPrime.ProbablyPrime(80) || !new(big.Int).Rsh(proof.GroupPrime, 1).ProbablyPrime(80) {
