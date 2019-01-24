@@ -78,11 +78,13 @@ func (s *RepresentationProofStructure) IsTrue(g group, bases BaseLookup, secretd
 	}
 
 	rhs.SetUint64(1)
+	var exp, contribution big.Int
 	for _, curRhs := range s.Rhs {
-		// TODO elimate one exp
-		bases.Exp(&base, curRhs.Base, big.NewInt(curRhs.Power), g.P)
-		contribution := new(big.Int).Exp(&base, secretdata.GetSecret(curRhs.Secret), g.P)
-		tmp.Mul(&rhs, contribution)
+		exp.SetInt64(curRhs.Power)
+		tmp.Mul(&exp, secretdata.GetSecret(curRhs.Secret))
+		exp.Mod(&tmp, g.order)
+		bases.Exp(&contribution, curRhs.Base, &exp, g.P)
+		tmp.Mul(&rhs, &contribution)
 		rhs.Mod(&tmp, g.P)
 	}
 
