@@ -1,14 +1,18 @@
 package main
 
-import "github.com/privacybydesign/keyproof/primeproofs"
-import "github.com/privacybydesign/gabi/big"
-import "github.com/privacybydesign/gabi"
-import "encoding/json"
-import "fmt"
-import "log"
-import "flag"
-import "os"
-import "runtime/pprof"
+import (
+	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/keyproof/primeproofs"
+
+	"encoding/json"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"runtime/pprof"
+	"time"
+)
 
 type StepStartMessage struct {
 	desc          string
@@ -93,6 +97,8 @@ func StartLogFollower() *LogFollower {
 		curLimit := 0
 		curDone := true
 		finalMessage := ""
+		ticker := time.NewTicker(time.Second / 4)
+		defer ticker.Stop()
 
 		for {
 			select {
@@ -125,10 +131,10 @@ func StartLogFollower() *LogFollower {
 				}
 				finished <- FinishMessage{}
 				return
-			}
-
-			if !curDone {
-				PrintStatus(curStatus, curCount, curLimit, false)
+			case <-ticker.C:
+				if !curDone {
+					PrintStatus(curStatus, curCount, curLimit, false)
+				}
 			}
 		}
 	}()
