@@ -1,8 +1,12 @@
 package primeproofs
 
-import "github.com/privacybydesign/gabi/big"
+import (
+	"github.com/privacybydesign/gabi/big"
 
-import "github.com/bwesterb/go-exptable"
+	"github.com/privacybydesign/keyproof/common"
+
+	"github.com/bwesterb/go-exptable"
+)
 
 type group struct {
 	P     *big.Int
@@ -12,6 +16,9 @@ type group struct {
 
 	gTable exptable.Table
 	hTable exptable.Table
+
+	PMod     common.FastMod
+	orderMod common.FastMod
 }
 
 func buildGroup(prime *big.Int) (group, bool) {
@@ -33,6 +40,9 @@ func buildGroup(prime *big.Int) (group, bool) {
 
 	result.gTable.Compute(result.g.Value(), result.P.Value(), 7)
 	result.hTable.Compute(result.h.Value(), result.P.Value(), 7)
+
+	result.PMod.Set(result.P)
+	result.orderMod.Set(result.order)
 
 	return result, true
 }

@@ -35,10 +35,10 @@ func (s *RepresentationProofStructure) GenerateCommitmentsFromSecrets(g group, l
 		// contribution := new(big.Int).Exp(base, secretdata.GetRandomizer(curRhs.Secret), g.P)
 		exp.Set(big.NewInt(curRhs.Power))
 		exp.Mul(&exp, secretdata.GetRandomizer(curRhs.Secret))
-		exp.Mod(&exp, g.order)
+		g.orderMod.Mod(&exp, &exp)
 		bases.Exp(&contribution, curRhs.Base, &exp, g.P)
 		commitment.Mul(commitment, &contribution)
-		commitment.Mod(commitment, g.P)
+		g.PMod.Mod(commitment, commitment)
 	}
 
 	return append(list, commitment)
@@ -50,7 +50,7 @@ func (s *RepresentationProofStructure) GenerateCommitmentsFromProof(g group, lis
 	for _, curLhs := range s.Lhs {
 		bases.Exp(&base, curLhs.Base, curLhs.Power, g.P)
 		tmp.Mul(&lhs, &base)
-		lhs.Mod(&tmp, g.P)
+		g.PMod.Mod(&lhs, &tmp)
 	}
 
 	commitment := new(big.Int).Exp(&lhs, challenge, g.P)
@@ -59,10 +59,10 @@ func (s *RepresentationProofStructure) GenerateCommitmentsFromProof(g group, lis
 		// base := bases.Exp(curRhs.Base, big.NewInt(curRhs.Power), g.P)
 		// contribution := new(big.Int).Exp(base, proofdata.GetResult(curRhs.Secret), g.P)
 		exp.Mul(big.NewInt(curRhs.Power), proofdata.GetResult(curRhs.Secret))
-		exp.Mod(&exp, g.order)
+		g.orderMod.Mod(&exp, &exp)
 		bases.Exp(&contribution, curRhs.Base, &exp, g.P)
 		commitment.Mul(commitment, &contribution)
-		commitment.Mod(commitment, g.P)
+		g.PMod.Mod(commitment, commitment)
 	}
 
 	return append(list, commitment)
@@ -74,7 +74,7 @@ func (s *RepresentationProofStructure) IsTrue(g group, bases BaseLookup, secretd
 	for _, curLhs := range s.Lhs {
 		bases.Exp(&base, curLhs.Base, curLhs.Power, g.P)
 		tmp.Mul(&lhs, &base)
-		lhs.Mod(&tmp, g.P)
+		g.PMod.Mod(&lhs, &tmp)
 	}
 
 	rhs.SetUint64(1)
@@ -82,10 +82,10 @@ func (s *RepresentationProofStructure) IsTrue(g group, bases BaseLookup, secretd
 	for _, curRhs := range s.Rhs {
 		exp.SetInt64(curRhs.Power)
 		tmp.Mul(&exp, secretdata.GetSecret(curRhs.Secret))
-		exp.Mod(&tmp, g.order)
+		g.orderMod.Mod(&exp, &tmp)
 		bases.Exp(&contribution, curRhs.Base, &exp, g.P)
 		tmp.Mul(&rhs, &contribution)
-		rhs.Mod(&tmp, g.P)
+		g.PMod.Mod(&rhs, &tmp)
 	}
 
 	return lhs.Cmp(&rhs) == 0
