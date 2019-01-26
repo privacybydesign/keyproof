@@ -136,6 +136,9 @@ func (c *PedersonSecret) GetBase(name string) *big.Int {
 	}
 	return nil
 }
+func (c *PedersonSecret) Names() []string {
+	return []string{c.name}
+}
 
 func (p *PedersonProof) SetName(name string) {
 	p.name = name
@@ -157,6 +160,9 @@ func (p *PedersonProof) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	}
 	ret.Exp(base, exp, P)
 	return true
+}
+func (p *PedersonProof) Names() []string {
+	return []string{p.name}
 }
 
 func (p *PedersonProof) GetBase(name string) *big.Int {

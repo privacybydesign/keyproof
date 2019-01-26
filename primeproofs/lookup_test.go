@@ -47,6 +47,12 @@ func (m *TestLookup) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	ret.Exp(base, exp, P)
 	return true
 }
+func (m *TestLookup) Names() (ret []string) {
+	for name := range m.kvs {
+		ret = append(ret, name)
+	}
+	return
+}
 func (m *TestLookup) GetSecret(name string) *big.Int {
 	return m.GetValue(name)
 }

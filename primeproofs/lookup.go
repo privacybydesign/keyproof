@@ -10,6 +10,7 @@ import (
 type BaseLookup interface {
 	GetBase(name string) *big.Int
 	Exp(ret *big.Int, name string, exp, P *big.Int) bool
+	Names() []string
 }
 
 type SecretLookup interface {
@@ -43,6 +44,10 @@ func (g *group) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	return true
 }
 
+func (g *group) Names() []string {
+	return []string{"g", "h"}
+}
+
 func (g *group) GetBase(name string) *big.Int {
 	if name == "g" {
 		return g.g
@@ -55,15 +60,40 @@ func (g *group) GetBase(name string) *big.Int {
 
 type BaseMerge struct {
 	parts []BaseLookup
+	names []string
+	lut   map[string]BaseLookup
 }
 
 func newBaseMerge(parts ...BaseLookup) BaseMerge {
 	var result BaseMerge
 	result.parts = parts
+	if len(parts) > 16 {
+		result.lut = make(map[string]BaseLookup)
+
+	}
+	for _, part := range parts {
+		partNames := part.Names()
+		if result.lut != nil {
+			for _, name := range partNames {
+				result.lut[name] = part
+			}
+		}
+		result.names = append(result.names, partNames...)
+	}
 	return result
 }
 
+func (b *BaseMerge) Names() []string {
+	return b.names
+}
 func (b *BaseMerge) GetBase(name string) *big.Int {
+	if b.lut != nil {
+		part, ok := b.lut[name]
+		if !ok {
+			return nil
+		}
+		return part.GetBase(name)
+	}
 	for _, part := range b.parts {
 		res := part.GetBase(name)
 		if res != nil {
@@ -74,6 +104,13 @@ func (b *BaseMerge) GetBase(name string) *big.Int {
 }
 
 func (b *BaseMerge) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
+	if b.lut != nil {
+		part, ok := b.lut[name]
+		if !ok {
+			return false
+		}
+		return part.Exp(ret, name, exp, P)
+	}
 	for _, part := range b.parts {
 		ok := part.Exp(ret, name, exp, P)
 		if ok {

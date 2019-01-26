@@ -52,6 +52,12 @@ func (rc *RepTestCommit) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	ret.Exp(base, exp, P)
 	return true
 }
+func (rc *RepTestCommit) Names() (ret []string) {
+	for name := range rc.commits {
+		ret = append(ret, name)
+	}
+	return
+}
 
 func TestRepresentationProofBasics(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))

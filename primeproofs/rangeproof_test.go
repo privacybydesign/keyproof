@@ -29,6 +29,12 @@ type RangeTestCommit struct {
 	commits map[string]*big.Int
 }
 
+func (rc *RangeTestCommit) Names() (ret []string) {
+	for name := range rc.commits {
+		ret = append(ret, name)
+	}
+	return
+}
 func (rc *RangeTestCommit) GetBase(name string) *big.Int {
 	res, ok := rc.commits[name]
 	if ok {
