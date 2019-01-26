@@ -119,15 +119,15 @@ func (c *PedersonSecret) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
 	}
 	// We effectively compute c.commit^exp, which is more expensive to do
 	// directly, than with two table-backed exponentiations.
-	var exp1, exp2, ret1, ret2 big.Int
-	exp1.Mul(c.secret, exp)
-	exp1.Mod(&exp1, c.g.order)
-	exp2.Mul(c.hider, exp)
-	exp2.Mod(&exp2, c.g.order)
+	var exp1, exp2, ret1, ret2, tmp big.Int
+	tmp.Mul(c.secret, exp)
+	c.g.orderMod.Mod(&exp1, &tmp)
+	tmp.Mul(c.hider, exp)
+	c.g.orderMod.Mod(&exp2, &tmp)
 	c.g.Exp(&ret1, "g", &exp1, c.g.P)
 	c.g.Exp(&ret2, "h", &exp2, c.g.P)
-	ret.Mul(&ret1, &ret2)
-	ret.Mod(ret, P)
+	tmp.Mul(&ret1, &ret2)
+	c.g.PMod.Mod(ret, &tmp)
 	return true
 }
 func (c *PedersonSecret) GetBase(name string) *big.Int {
