@@ -2,7 +2,7 @@ package primeproofs
 
 import "testing"
 import "encoding/json"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 func TestExpStepBFlow(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
@@ -29,7 +29,7 @@ func TestExpStepBFlow(t *testing.T) {
 	}
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
-	
+
 	if len(listSecrets) != s.NumCommitments() {
 		t.Error("NumCommitments is off")
 	}

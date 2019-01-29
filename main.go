@@ -1,20 +1,27 @@
 package main
 
-import "github.com/privacybydesign/keyproof/primeproofs"
-import "github.com/mhe/gabi/big"
-import "github.com/mhe/gabi"
-import "encoding/json"
-import "fmt"
-import "os"
+import (
+	"github.com/privacybydesign/gabi"
+	"github.com/privacybydesign/gabi/big"
+	"github.com/privacybydesign/keyproof/primeproofs"
+
+	"encoding/json"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"runtime/pprof"
+	"time"
+)
 
 type StepStartMessage struct {
 	desc          string
 	intermediates int
 }
-type StepDoneMessage struct {}
-type TickMessage struct {}
-type QuitMessage struct {}
-type FinishMessage struct {}
+type StepDoneMessage struct{}
+type TickMessage struct{}
+type QuitMessage struct{}
+type FinishMessage struct{}
 type SetFinalMessage struct {
 	message string
 }
@@ -53,14 +60,14 @@ func PrintStatus(status string, count, limit int, done bool) {
 	} else {
 		tail = ""
 	}
-	
+
 	tlen := len(tail)
 	if tlen == 0 {
 		tlen = 4
 	}
-	
+
 	fmt.Printf("\r%s", status)
-	for i := 0; i < 60-len(status) - tlen; i++ {
+	for i := 0; i < 60-len(status)-tlen; i++ {
 		fmt.Printf(".")
 	}
 	fmt.Printf("%s", tail)
@@ -68,21 +75,21 @@ func PrintStatus(status string, count, limit int, done bool) {
 
 func StartLogFollower() *LogFollower {
 	var result = new(LogFollower)
-	
+
 	starts := make(chan StepStartMessage)
 	dones := make(chan StepDoneMessage)
 	ticks := make(chan TickMessage)
 	quit := make(chan QuitMessage)
 	finished := make(chan FinishMessage)
 	finalmessage := make(chan SetFinalMessage)
-	
+
 	result.StepStartEvents = starts
 	result.StepDoneEvents = dones
 	result.TickEvents = ticks
 	result.QuitEvents = quit
 	result.Finished = finished
 	result.FinalEvents = finalmessage
-	
+
 	go func() {
 		doneMissing := 0
 		curStatus := ""
@@ -90,21 +97,23 @@ func StartLogFollower() *LogFollower {
 		curLimit := 0
 		curDone := true
 		finalMessage := ""
-		
+		ticker := time.NewTicker(time.Second / 4)
+		defer ticker.Stop()
+
 		for {
 			select {
-			case <- ticks:
+			case <-ticks:
 				curCount++
-			case <- dones:
+			case <-dones:
 				if doneMissing > 0 {
 					doneMissing--
-					continue; // Swallow quietly
+					continue // Swallow quietly
 				} else {
 					curDone = true
 					PrintStatus(curStatus, curCount, curLimit, true)
 					fmt.Printf("\n")
 				}
-			case stepstart := <- starts:
+			case stepstart := <-starts:
 				if !curDone {
 					PrintStatus(curStatus, curCount, curLimit, true)
 					fmt.Printf("\n")
@@ -114,24 +123,24 @@ func StartLogFollower() *LogFollower {
 				curCount = 0
 				curLimit = stepstart.intermediates
 				curStatus = stepstart.desc
-			case messageevent := <- finalmessage:
+			case messageevent := <-finalmessage:
 				finalMessage = messageevent.message
-			case <- quit:
+			case <-quit:
 				if finalMessage != "" {
 					fmt.Printf("%s\n", finalMessage)
 				}
 				finished <- FinishMessage{}
 				return
-			}
-			
-			if !curDone {
-				PrintStatus(curStatus, curCount, curLimit, false)
+			case <-ticker.C:
+				if !curDone {
+					PrintStatus(curStatus, curCount, curLimit, false)
+				}
 			}
 		}
-	} ()
-	
+	}()
+
 	primeproofs.Follower = result
-	
+
 	return result
 }
 
@@ -189,7 +198,7 @@ func verifyProof(pkfilename, prooffilename string) {
 		fmt.Printf("Error reading in public key: %s\n", err.Error())
 		return
 	}
-	
+
 	// Try to read proof
 	follower.StepStart("Reading proofdata", 0)
 	proofFile, err := os.Open(prooffilename)
@@ -222,24 +231,37 @@ func verifyProof(pkfilename, prooffilename string) {
 
 var follower *LogFollower
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
-	if len(os.Args) != 4 {
+	flag.Parse()
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
+	if len(flag.Args()) != 3 {
 		printHelp()
 		return
 	}
-	
+
 	follower = StartLogFollower()
 	defer func() {
 		follower.QuitEvents <- QuitMessage{}
-		<- follower.Finished
+		<-follower.Finished
 	}()
 
-	if os.Args[1] == "buildproof" {
-		buildProof(os.Args[2], os.Args[3])
+	if flag.Arg(0) == "buildproof" {
+		buildProof(flag.Arg(1), flag.Arg(2))
 		return
 	}
-	if os.Args[1] == "verify" {
-		verifyProof(os.Args[2], os.Args[3])
+	if flag.Arg(0) == "verify" {
+		verifyProof(flag.Arg(1), flag.Arg(2))
 		return
 	}
 

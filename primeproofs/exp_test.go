@@ -1,6 +1,6 @@
 package primeproofs
 
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 import "testing"
 import "encoding/json"
 
@@ -33,7 +33,7 @@ func TestExpProofFlow(t *testing.T) {
 	}
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
-	
+
 	if len(listSecrets) != s.NumCommitments() {
 		t.Error("NumCommitments is off")
 	}

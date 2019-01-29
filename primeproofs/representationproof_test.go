@@ -1,7 +1,7 @@
 package primeproofs
 
 import "testing"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 type RepTestSecret struct {
 	secrets     map[string]*big.Int
@@ -47,6 +47,17 @@ func (rc *RepTestCommit) GetBase(name string) *big.Int {
 	}
 	return nil
 }
+func (rc *RepTestCommit) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
+	base := rc.GetBase(name)
+	ret.Exp(base, exp, P)
+	return true
+}
+func (rc *RepTestCommit) Names() (ret []string) {
+	for name := range rc.commits {
+		ret = append(ret, name)
+	}
+	return
+}
 
 func TestRepresentationProofBasics(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
@@ -78,7 +89,7 @@ func TestRepresentationProofBasics(t *testing.T) {
 	bases := newBaseMerge(&g, &commit)
 
 	listSecrets := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
-	
+
 	if len(listSecrets) != s.NumCommitments() {
 		t.Error("NumCommitments is off")
 	}
@@ -155,7 +166,7 @@ func TestRepresentationProofComplex(t *testing.T) {
 	bases := newBaseMerge(&g, &commit)
 
 	listSecrets := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
-	
+
 	if len(listSecrets) != s.NumCommitments() {
 		t.Error("NumCommitments is off")
 	}

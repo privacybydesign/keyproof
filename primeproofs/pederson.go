@@ -1,7 +1,7 @@
 package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 import "strings"
 
 type PedersonSecret struct {
@@ -12,6 +12,8 @@ type PedersonSecret struct {
 	hider            *big.Int
 	hiderRandomizer  *big.Int
 	commit           *big.Int
+
+	g *group
 }
 
 type PedersonProof struct {
@@ -57,21 +59,24 @@ func newPedersonSecret(g group, name string, value *big.Int) PedersonSecret {
 	result.secretRandomizer = common.RandomBigInt(g.order)
 	result.hider = common.RandomBigInt(g.order)
 	result.hiderRandomizer = common.RandomBigInt(g.order)
-	result.commit = new(big.Int).Mod(
-		new(big.Int).Mul(
-			new(big.Int).Exp(g.g, result.secret, g.P),
-			new(big.Int).Exp(g.h, result.hider, g.P)),
-		g.P)
+	var gCommit, hCommit big.Int
+	g.Exp(&gCommit, "g", result.secret, g.P)
+	g.Exp(&hCommit, "h", result.hider, g.P)
+	result.commit = new(big.Int)
+	result.commit.Mul(&gCommit, &hCommit)
+	result.commit.Mod(result.commit, g.P)
+	result.g = &g
 	return result
 }
 
 func newPedersonFakeProof(g group) PedersonProof {
 	var result PedersonProof
-	result.Commit = new(big.Int).Mod(
-		new(big.Int).Mul(
-			new(big.Int).Exp(g.g, common.RandomBigInt(g.order), g.P),
-			new(big.Int).Exp(g.h, common.RandomBigInt(g.order), g.P)),
-		g.P)
+	var gCommit, hCommit big.Int
+	g.Exp(&gCommit, "g", common.RandomBigInt(g.order), g.P)
+	g.Exp(&hCommit, "h", common.RandomBigInt(g.order), g.P)
+	result.Commit = new(big.Int)
+	result.Commit.Mul(&gCommit, &hCommit)
+	result.Commit.Mod(result.Commit, g.P)
 	result.Sresult = common.RandomBigInt(g.order)
 	result.Hresult = common.RandomBigInt(g.order)
 	return result
@@ -108,12 +113,31 @@ func (s *PedersonSecret) GetRandomizer(name string) *big.Int {
 	}
 	return nil
 }
-
+func (c *PedersonSecret) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
+	if name != c.name {
+		return false
+	}
+	// We effectively compute c.commit^exp, which is more expensive to do
+	// directly, than with two table-backed exponentiations.
+	var exp1, exp2, ret1, ret2, tmp big.Int
+	tmp.Mul(c.secret, exp)
+	c.g.orderMod.Mod(&exp1, &tmp)
+	tmp.Mul(c.hider, exp)
+	c.g.orderMod.Mod(&exp2, &tmp)
+	c.g.Exp(&ret1, "g", &exp1, c.g.P)
+	c.g.Exp(&ret2, "h", &exp2, c.g.P)
+	tmp.Mul(&ret1, &ret2)
+	c.g.PMod.Mod(ret, &tmp)
+	return true
+}
 func (c *PedersonSecret) GetBase(name string) *big.Int {
 	if name == c.name {
 		return c.commit
 	}
 	return nil
+}
+func (c *PedersonSecret) Names() []string {
+	return []string{c.name}
 }
 
 func (p *PedersonProof) SetName(name string) {
@@ -127,6 +151,18 @@ func (p *PedersonProof) GenerateCommitments(list []*big.Int) []*big.Int {
 
 func (p *PedersonProof) VerifyStructure() bool {
 	return p.Commit != nil && p.Sresult != nil && p.Hresult != nil
+}
+
+func (p *PedersonProof) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
+	base := p.GetBase(name)
+	if base == nil {
+		return false
+	}
+	ret.Exp(base, exp, P)
+	return true
+}
+func (p *PedersonProof) Names() []string {
+	return []string{p.name}
 }
 
 func (p *PedersonProof) GetBase(name string) *big.Int {

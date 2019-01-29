@@ -2,8 +2,37 @@ package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
 import "github.com/privacybydesign/keyproof/qspp"
-import "github.com/mhe/gabi/big"
-import "github.com/mhe/gabi/safeprime"
+import "github.com/privacybydesign/gabi/big"
+import "github.com/privacybydesign/gabi/safeprime"
+
+// A convenient safe prime is a safe prime of the form
+// 2^exp - diff for small positive diff.
+type ConvenientSafePrime struct {
+	Exp  int
+	Diff int
+}
+
+var convenientSafePrimes = []ConvenientSafePrime{
+	{787, 7341},
+	{836, 12077},
+	{912, 7577},
+	{933, 6249},
+	{985, 3645},
+	{1008, 3317},
+	{1259, 2505},
+	{1307, 4425},
+	{1503, 1629},
+	{1567, 3309},
+	{2043, 11301},
+	{2145, 429},
+	{2639, 163185},
+	{2659, 91209},
+	{2661, 71745},
+	{2705, 5445},
+	{4099, 5025},
+	{4682, 190265},
+	{4743, 268629},
+}
 
 type SafePrimeProofStructure struct {
 	N          *big.Int
@@ -113,12 +142,32 @@ func (s *SafePrimeProofStructure) NumRangeProofs() int {
 	return s.PprimeIsPrime.NumRangeProofs() + s.QprimeIsPrime.NumRangeProofs()
 }
 
+func findConvenientPrime(size int) *big.Int {
+	for _, cp := range convenientSafePrimes {
+		if int(cp.Exp) > size && int(cp.Exp)-size < 50 {
+			var ret, diff big.Int
+			diff.SetUint64(uint64(cp.Diff))
+			ret.SetUint64(1)
+			ret.Lsh(&ret, uint(cp.Exp))
+			ret.Sub(&ret, &diff)
+			return &ret
+		}
+	}
+	return nil
+}
+
 func (s *SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) SafePrimeProof {
 	// Generate proof group
+	var err error
 	Follower.StepStart("Generating group prime", 0)
-	GroupPrime, err := safeprime.Generate(s.N.BitLen() + 2*rangeProofEpsilon + 10)
-	if err != nil {
-		panic(err.Error())
+	primeSize := s.N.BitLen() + 2*rangeProofEpsilon + 10
+
+	GroupPrime := findConvenientPrime(primeSize)
+	if GroupPrime == nil {
+		GroupPrime, err = safeprime.Generate(primeSize)
+		if err != nil {
+			panic(err.Error())
+		}
 	}
 	g, gok := buildGroup(GroupPrime)
 	if !gok {
@@ -195,7 +244,7 @@ func (s *SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) S
 func (s *SafePrimeProofStructure) VerifyProof(proof SafePrimeProof) bool {
 	// Check proof structure
 	Follower.StepStart("Verifying structure", 0)
-	if proof.GroupPrime == nil || proof.GroupPrime.BitLen() != s.N.BitLen()+2*rangeProofEpsilon+10 {
+	if proof.GroupPrime == nil || proof.GroupPrime.BitLen() < s.N.BitLen()+2*rangeProofEpsilon+10 {
 		return false
 	}
 	if !proof.GroupPrime.ProbablyPrime(80) || !new(big.Int).Rsh(proof.GroupPrime, 1).ProbablyPrime(80) {

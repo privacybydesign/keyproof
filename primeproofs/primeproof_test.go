@@ -2,7 +2,7 @@ package primeproofs
 
 import "testing"
 import "encoding/json"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 func TestPrimeProofFlow(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))
@@ -20,7 +20,7 @@ func TestPrimeProofFlow(t *testing.T) {
 	bases := newBaseMerge(&g, &pCommit)
 
 	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &pCommit)
-	
+
 	if len(listSecrets) != s.NumCommitments() {
 		t.Error("NumCommitments is off")
 	}

@@ -2,7 +2,7 @@ package primeproofs
 
 import "testing"
 import "encoding/json"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 func TestPedersonSecret(t *testing.T) {
 	g, gok := buildGroup(big.NewInt(47))

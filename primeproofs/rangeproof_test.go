@@ -2,7 +2,7 @@ package primeproofs
 
 import "testing"
 import "encoding/json"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 type RangeTestSecret struct {
 	secrets     map[string]*big.Int
@@ -29,12 +29,23 @@ type RangeTestCommit struct {
 	commits map[string]*big.Int
 }
 
+func (rc *RangeTestCommit) Names() (ret []string) {
+	for name := range rc.commits {
+		ret = append(ret, name)
+	}
+	return
+}
 func (rc *RangeTestCommit) GetBase(name string) *big.Int {
 	res, ok := rc.commits[name]
 	if ok {
 		return res
 	}
 	return nil
+}
+func (rc *RangeTestCommit) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
+	base := rc.GetBase(name)
+	ret.Exp(base, exp, P)
+	return true
 }
 
 func listCmp(a []*big.Int, b []*big.Int) bool {
@@ -90,7 +101,7 @@ func TestRangeProofBasic(t *testing.T) {
 	}
 
 	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
-	
+
 	if len(listSecret) != s.NumCommitments() {
 		t.Error("NumCommitments is off")
 	}
@@ -161,7 +172,7 @@ func TestRangeProofComplex(t *testing.T) {
 	}
 
 	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
-	
+
 	if len(listSecret) != s.NumCommitments() {
 		t.Error("NumCommitments is off")
 	}

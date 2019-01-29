@@ -1,7 +1,7 @@
 package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 import "strings"
 
 type PrimeProofStructure struct {
@@ -321,7 +321,7 @@ func (s *PrimeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*bi
 	agenproof := RepresentationProofStructure{
 		[]LhsContribution{
 			LhsContribution{commit.preaPederson.name, big.NewInt(1)},
-			LhsContribution{"g", aAdd},
+			LhsContribution{"g", new(big.Int).Mod(aAdd, g.order)},
 			LhsContribution{commit.aPederson.name, big.NewInt(-1)},
 		},
 		[]RhsContribution{
@@ -379,7 +379,7 @@ func (s *PrimeProofStructure) BuildProof(g group, challenge *big.Int, commit Pri
 	agenproof := RepresentationProofStructure{
 		[]LhsContribution{
 			LhsContribution{commit.preaPederson.name, big.NewInt(1)},
-			LhsContribution{"g", aAdd},
+			LhsContribution{"g", new(big.Int).Mod(aAdd, g.order)},
 			LhsContribution{commit.aPederson.name, big.NewInt(-1)},
 		},
 		[]RhsContribution{
@@ -475,7 +475,7 @@ func (s *PrimeProofStructure) FakeProof(g group, challenge *big.Int) PrimeProof 
 	agenproof := RepresentationProofStructure{
 		[]LhsContribution{
 			LhsContribution{strings.Join([]string{s.myname, "prea"}, "_"), big.NewInt(1)},
-			LhsContribution{"g", aAdd},
+			LhsContribution{"g", new(big.Int).Mod(aAdd, g.order)},
 			LhsContribution{strings.Join([]string{s.myname, "a"}, "_"), big.NewInt(-1)},
 		},
 		[]RhsContribution{
@@ -526,6 +526,7 @@ func (s *PrimeProofStructure) VerifyProofStructure(challenge *big.Int, proof Pri
 	agenproof := RepresentationProofStructure{
 		[]LhsContribution{
 			LhsContribution{strings.Join([]string{s.myname, "prea"}, "_"), big.NewInt(1)},
+			// LhsContribution{"g", new(big.Int).Mod(aAdd, g.order)},
 			LhsContribution{"g", aAdd},
 			LhsContribution{strings.Join([]string{s.myname, "a"}, "_"), big.NewInt(-1)},
 		},
@@ -589,7 +590,7 @@ func (s *PrimeProofStructure) GenerateCommitmentsFromProof(g group, list []*big.
 	agenproof := RepresentationProofStructure{
 		[]LhsContribution{
 			LhsContribution{strings.Join([]string{s.myname, "prea"}, "_"), big.NewInt(1)},
-			LhsContribution{"g", aAdd},
+			LhsContribution{"g", new(big.Int).Mod(aAdd, g.order)},
 			LhsContribution{strings.Join([]string{s.myname, "a"}, "_"), big.NewInt(-1)},
 		},
 		[]RhsContribution{

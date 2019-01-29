@@ -1,7 +1,7 @@
 package primeproofs
 
 import "testing"
-import "github.com/mhe/gabi/big"
+import "github.com/privacybydesign/gabi/big"
 
 func TestGroupWithSafePrime(t *testing.T) {
 	group, ok := buildGroup(big.NewInt(26903))
