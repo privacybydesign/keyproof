@@ -7,10 +7,13 @@ import "github.com/privacybydesign/gabi/big"
 func TestValidKeyProof(t *testing.T) {
 	const p = 26903
 	const q = 27803
+	const a = 36
+	const b = 49
+	const c = 64
 
 	Follower.(*TestFollower).count = 0
 
-	s := NewValidKeyProofStructure(big.NewInt(p * q))
+	s := NewValidKeyProofStructure(big.NewInt(p*q), big.NewInt(a), big.NewInt(b), []*big.Int{big.NewInt(c)})
 	proof := s.BuildProof(big.NewInt((p-1)/2), big.NewInt((q-1)/2))
 
 	if Follower.(*TestFollower).count != s.NumRangeProofs() {
@@ -32,8 +35,11 @@ func TestValidKeyProof(t *testing.T) {
 func TestValidKeyProofStructure(t *testing.T) {
 	const p = 26903
 	const q = 27803
+	const a = 36
+	const b = 49
+	const c = 64
 
-	s := NewValidKeyProofStructure(big.NewInt(p * q))
+	s := NewValidKeyProofStructure(big.NewInt(p*q), big.NewInt(a), big.NewInt(b), []*big.Int{big.NewInt(c)})
 	proof := s.BuildProof(big.NewInt((p-1)/2), big.NewInt((q-1)/2))
 
 	backup := proof.GroupPrime
@@ -121,6 +127,13 @@ func TestValidKeyProofStructure(t *testing.T) {
 	}
 	proof.QSPPproof.PPPproof.Responses[2] = backup
 
+	backup = proof.BasesValidProof.NProof.Commit
+	proof.BasesValidProof.NProof.Commit = nil
+	if s.VerifyProof(proof) {
+		t.Error("Accepting corrupted BasesValidProof")
+	}
+	proof.BasesValidProof.NProof.Commit = backup
+
 	if !s.VerifyProof(proof) {
 		t.Error("Testing corrupted proof structure!")
 	}
@@ -129,8 +142,11 @@ func TestValidKeyProofStructure(t *testing.T) {
 func TestValidKeyProofJSON(t *testing.T) {
 	const p = 26903
 	const q = 27803
+	const a = 36
+	const b = 49
+	const c = 64
 
-	s := NewValidKeyProofStructure(big.NewInt(p * q))
+	s := NewValidKeyProofStructure(big.NewInt(p*q), big.NewInt(a), big.NewInt(b), []*big.Int{big.NewInt(c)})
 	proofBefore := s.BuildProof(big.NewInt((p-1)/2), big.NewInt((q-1)/2))
 	proofJSON, err := json.Marshal(proofBefore)
 	if err != nil {

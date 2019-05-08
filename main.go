@@ -145,15 +145,28 @@ func StartLogFollower() *LogFollower {
 }
 
 func printHelp() {
-	fmt.Printf("Usage: keyproof [action] [keyfile] [prooffile]\n")
+	fmt.Printf("Usage: keyproof [action] [keyfile(s)] [prooffile]\n")
 	fmt.Printf("Possible actions: buildproof, verify\n")
 }
 
-func buildProof(skfilename, prooffilename string) {
+func buildProof(pkfilename, skfilename, prooffilename string) {
+	// Try to read public key
+	pk, err := gabi.NewPublicKeyFromFile(pkfilename)
+	if err != nil {
+		fmt.Printf("Error reading in public key: %s", err.Error())
+		return
+	}
+
 	// Try to read private key
 	sk, err := gabi.NewPrivateKeyFromFile(skfilename)
 	if err != nil {
 		fmt.Printf("Error reading in private key: %s\n", err.Error())
+		return
+	}
+
+	// Validate that they match
+	if pk.N.Cmp(new(big.Int).Mul(sk.P, sk.Q)) != 0 {
+		fmt.Printf("Private and public key do not match\n")
 		return
 	}
 
@@ -180,8 +193,7 @@ func buildProof(skfilename, prooffilename string) {
 	defer proofFile.Close()
 
 	// Build the proof
-	N := new(big.Int).Mul(sk.P, sk.Q)
-	s := primeproofs.NewValidKeyProofStructure(N)
+	s := primeproofs.NewValidKeyProofStructure(pk.N, pk.Z, pk.S, pk.R)
 	proof := s.BuildProof(sk.PPrime, sk.QPrime)
 
 	// And write it to file
@@ -219,7 +231,7 @@ func verifyProof(pkfilename, prooffilename string) {
 	follower.StepDone()
 
 	// Construct proof structure
-	s := primeproofs.NewValidKeyProofStructure(pk.N)
+	s := primeproofs.NewValidKeyProofStructure(pk.N, pk.Z, pk.S, pk.R)
 
 	// And use it to validate the proof
 	if !s.VerifyProof(proof) {
@@ -245,7 +257,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	if len(flag.Args()) != 3 {
+	if len(flag.Args()) < 3 {
 		printHelp()
 		return
 	}
@@ -257,10 +269,18 @@ func main() {
 	}()
 
 	if flag.Arg(0) == "buildproof" {
-		buildProof(flag.Arg(1), flag.Arg(2))
+		if len(flag.Args()) != 4 {
+			printHelp()
+			return
+		}
+		buildProof(flag.Arg(1), flag.Arg(2), flag.Arg(3))
 		return
 	}
 	if flag.Arg(0) == "verify" {
+		if len(flag.Args()) != 3 {
+			printHelp()
+			return
+		}
 		verifyProof(flag.Arg(1), flag.Arg(2))
 		return
 	}

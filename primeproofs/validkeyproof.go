@@ -16,6 +16,8 @@ type ValidKeyProofStructure struct {
 
 	PprimeIsPrime PrimeProofStructure
 	QprimeIsPrime PrimeProofStructure
+
+	BasesValid IsSquareProofStructure
 }
 
 type ValidKeyProof struct {
@@ -31,6 +33,8 @@ type ValidKeyProof struct {
 	QprimeIsPrimeProof PrimeProof
 
 	QSPPproof qspp.QuasiSafePrimeProductProof
+
+	BasesValidProof IsSquareProof
 }
 
 type SafePrimeSecret struct {
@@ -59,7 +63,7 @@ func (p *ValidKeyProof) GetResult(name string) *big.Int {
 	return nil
 }
 
-func NewValidKeyProofStructure(N *big.Int) ValidKeyProofStructure {
+func NewValidKeyProofStructure(N *big.Int, Z *big.Int, S *big.Int, Bases []*big.Int) ValidKeyProofStructure {
 	var structure ValidKeyProofStructure
 
 	structure.N = new(big.Int).Set(N)
@@ -105,11 +109,17 @@ func NewValidKeyProofStructure(N *big.Int) ValidKeyProofStructure {
 	structure.PprimeIsPrime = newPrimeProofStructure("pprime", uint((N.BitLen()+1)/2))
 	structure.QprimeIsPrime = newPrimeProofStructure("qprime", uint((N.BitLen()+1)/2))
 
+	BaseList := []*big.Int{}
+	BaseList = append(BaseList, Z)
+	BaseList = append(BaseList, S)
+	BaseList = append(BaseList, Bases...)
+	structure.BasesValid = NewIsSquareProofStructure(N, BaseList)
+
 	return structure
 }
 
 func (s *ValidKeyProofStructure) NumRangeProofs() int {
-	return s.PprimeIsPrime.NumRangeProofs() + s.QprimeIsPrime.NumRangeProofs()
+	return s.PprimeIsPrime.NumRangeProofs() + s.QprimeIsPrime.NumRangeProofs() + s.BasesValid.NumRangeProofs()
 }
 
 func (s *ValidKeyProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) ValidKeyProof {
@@ -125,11 +135,16 @@ func (s *ValidKeyProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) Va
 	Follower.StepDone()
 
 	Follower.StepStart("Generating commitments", s.NumRangeProofs())
+
+	// Build up some derived values
+	P := new(big.Int).Add(new(big.Int).Lsh(Pprime, 1), big.NewInt(1))
+	Q := new(big.Int).Add(new(big.Int).Lsh(Qprime, 1), big.NewInt(1))
+
 	// Build up the secrets
 	PprimeSecret := newPedersonSecret(g, "pprime", Pprime)
 	QprimeSecret := newPedersonSecret(g, "qprime", Qprime)
-	PSecret := newPedersonSecret(g, "p", new(big.Int).Add(new(big.Int).Lsh(Pprime, 1), big.NewInt(1)))
-	QSecret := newPedersonSecret(g, "q", new(big.Int).Add(new(big.Int).Lsh(Qprime, 1), big.NewInt(1)))
+	PSecret := newPedersonSecret(g, "p", P)
+	QSecret := newPedersonSecret(g, "q", Q)
 
 	PQNRelSecret := SafePrimeSecret{
 		new(big.Int).Mod(new(big.Int).Mul(PSecret.hider, QSecret.secret), g.order),
@@ -145,6 +160,7 @@ func (s *ValidKeyProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) Va
 	var PprimeIsPrimeCommit PrimeProofCommit
 	var QprimeIsPrimeCommit PrimeProofCommit
 	var QSPPcommit qspp.QuasiSafePrimeProductCommit
+	var BasesValidCommit isSquareProofCommit
 	list = append(list, GroupPrime)
 	list = append(list, s.N)
 	list = PprimeSecret.GenerateCommitments(list)
@@ -161,6 +177,7 @@ func (s *ValidKeyProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) Va
 	list, PprimeIsPrimeCommit = s.PprimeIsPrime.GenerateCommitmentsFromSecrets(g, list, &bases, &secrets)
 	list, QprimeIsPrimeCommit = s.QprimeIsPrime.GenerateCommitmentsFromSecrets(g, list, &bases, &secrets)
 	list, QSPPcommit = qspp.QuasiSafePrimeProductBuildCommitments(list, Pprime, Qprime)
+	list, BasesValidCommit = s.BasesValid.GenerateCommitmentsFromSecrets(g, list, P, Q)
 	Follower.StepDone()
 
 	Follower.StepStart("Generating proof", 0)
@@ -185,6 +202,7 @@ func (s *ValidKeyProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) Va
 	proof.PprimeIsPrimeProof = s.PprimeIsPrime.BuildProof(g, challenge, PprimeIsPrimeCommit, &secrets)
 	proof.QprimeIsPrimeProof = s.QprimeIsPrime.BuildProof(g, challenge, QprimeIsPrimeCommit, &secrets)
 	proof.QSPPproof = qspp.QuasiSafePrimeProductBuildProof(Pprime, Qprime, challenge, QSPPcommit)
+	proof.BasesValidProof = s.BasesValid.BuildProof(g, challenge, BasesValidCommit)
 	Follower.StepDone()
 
 	return proof
@@ -214,6 +232,9 @@ func (s *ValidKeyProofStructure) VerifyProof(proof ValidKeyProof) bool {
 		return false
 	}
 	if !qspp.QuasiSafePrimeProductVerifyStructure(proof.QSPPproof) {
+		return false
+	}
+	if !s.BasesValid.VerifyProofStructure(proof.BasesValidProof) {
 		return false
 	}
 	Follower.StepDone()
@@ -254,6 +275,7 @@ func (s *ValidKeyProofStructure) VerifyProof(proof ValidKeyProof) bool {
 	list = s.PprimeIsPrime.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs, proof.PprimeIsPrimeProof)
 	list = s.QprimeIsPrime.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs, proof.QprimeIsPrimeProof)
 	list = qspp.QuasiSafePrimeProductExtractCommitments(list, proof.QSPPproof)
+	list = s.BasesValid.GenerateCommitmentsFromProof(g, list, proof.Challenge, proof.BasesValidProof)
 
 	Follower.StepDone()
 
