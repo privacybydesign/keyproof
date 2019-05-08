@@ -181,7 +181,7 @@ func buildProof(skfilename, prooffilename string) {
 
 	// Build the proof
 	N := new(big.Int).Mul(sk.P, sk.Q)
-	s := primeproofs.NewSafePrimeProofStructure(N)
+	s := primeproofs.NewValidKeyProofStructure(N)
 	proof := s.BuildProof(sk.PPrime, sk.QPrime)
 
 	// And write it to file
@@ -209,7 +209,7 @@ func verifyProof(pkfilename, prooffilename string) {
 	}
 	defer proofFile.Close()
 	proofDecoder := json.NewDecoder(proofFile)
-	var proof primeproofs.SafePrimeProof
+	var proof primeproofs.ValidKeyProof
 	err = proofDecoder.Decode(&proof)
 	if err != nil {
 		follower.StepDone()
@@ -219,7 +219,7 @@ func verifyProof(pkfilename, prooffilename string) {
 	follower.StepDone()
 
 	// Construct proof structure
-	s := primeproofs.NewSafePrimeProofStructure(pk.N)
+	s := primeproofs.NewValidKeyProofStructure(pk.N)
 
 	// And use it to validate the proof
 	if !s.VerifyProof(proof) {

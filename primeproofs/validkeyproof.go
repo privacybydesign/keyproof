@@ -4,7 +4,7 @@ import "github.com/privacybydesign/keyproof/common"
 import "github.com/privacybydesign/keyproof/qspp"
 import "github.com/privacybydesign/gabi/big"
 
-type SafePrimeProofStructure struct {
+type ValidKeyProofStructure struct {
 	N          *big.Int
 	PRep       RepresentationProofStructure
 	QRep       RepresentationProofStructure
@@ -18,7 +18,7 @@ type SafePrimeProofStructure struct {
 	QprimeIsPrime PrimeProofStructure
 }
 
-type SafePrimeProof struct {
+type ValidKeyProof struct {
 	PProof      PedersonProof
 	QProof      PedersonProof
 	PprimeProof PedersonProof
@@ -52,15 +52,15 @@ func (s *SafePrimeSecret) GetRandomizer(name string) *big.Int {
 	return nil
 }
 
-func (p *SafePrimeProof) GetResult(name string) *big.Int {
+func (p *ValidKeyProof) GetResult(name string) *big.Int {
 	if name == "pqnrel" {
 		return p.PQNRel
 	}
 	return nil
 }
 
-func NewSafePrimeProofStructure(N *big.Int) SafePrimeProofStructure {
-	var structure SafePrimeProofStructure
+func NewValidKeyProofStructure(N *big.Int) ValidKeyProofStructure {
+	var structure ValidKeyProofStructure
 
 	structure.N = new(big.Int).Set(N)
 	structure.PRep = newPedersonRepresentationProofStructure("p")
@@ -108,11 +108,11 @@ func NewSafePrimeProofStructure(N *big.Int) SafePrimeProofStructure {
 	return structure
 }
 
-func (s *SafePrimeProofStructure) NumRangeProofs() int {
+func (s *ValidKeyProofStructure) NumRangeProofs() int {
 	return s.PprimeIsPrime.NumRangeProofs() + s.QprimeIsPrime.NumRangeProofs()
 }
 
-func (s *SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) SafePrimeProof {
+func (s *ValidKeyProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) ValidKeyProof {
 	// Generate proof group
 	Follower.StepStart("Generating group prime", 0)
 	primeSize := s.N.BitLen() + 2*rangeProofEpsilon + 10
@@ -168,7 +168,7 @@ func (s *SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) S
 	challenge := common.HashCommit(list)
 
 	// Calculate proofs
-	var proof SafePrimeProof
+	var proof ValidKeyProof
 	proof.GroupPrime = GroupPrime
 	proof.PQNRel = new(big.Int).Mod(
 		new(big.Int).Sub(
@@ -190,7 +190,7 @@ func (s *SafePrimeProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) S
 	return proof
 }
 
-func (s *SafePrimeProofStructure) VerifyProof(proof SafePrimeProof) bool {
+func (s *ValidKeyProofStructure) VerifyProof(proof ValidKeyProof) bool {
 	// Check proof structure
 	Follower.StepStart("Verifying structure", 0)
 	defer Follower.StepDone()

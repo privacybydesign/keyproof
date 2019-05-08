@@ -4,13 +4,13 @@ import "testing"
 import "encoding/json"
 import "github.com/privacybydesign/gabi/big"
 
-func TestSafePrimeProof(t *testing.T) {
+func TestValidKeyProof(t *testing.T) {
 	const p = 26903
 	const q = 27803
 
 	Follower.(*TestFollower).count = 0
 
-	s := NewSafePrimeProofStructure(big.NewInt(p * q))
+	s := NewValidKeyProofStructure(big.NewInt(p * q))
 	proof := s.BuildProof(big.NewInt((p-1)/2), big.NewInt((q-1)/2))
 
 	if Follower.(*TestFollower).count != s.NumRangeProofs() {
@@ -29,11 +29,11 @@ func TestSafePrimeProof(t *testing.T) {
 	}
 }
 
-func TestSafePrimeProofStructure(t *testing.T) {
+func TestValidKeyProofStructure(t *testing.T) {
 	const p = 26903
 	const q = 27803
 
-	s := NewSafePrimeProofStructure(big.NewInt(p * q))
+	s := NewValidKeyProofStructure(big.NewInt(p * q))
 	proof := s.BuildProof(big.NewInt((p-1)/2), big.NewInt((q-1)/2))
 
 	backup := proof.GroupPrime
@@ -126,11 +126,11 @@ func TestSafePrimeProofStructure(t *testing.T) {
 	}
 }
 
-func TestSafePrimeProofJSON(t *testing.T) {
+func TestValidKeyProofJSON(t *testing.T) {
 	const p = 26903
 	const q = 27803
 
-	s := NewSafePrimeProofStructure(big.NewInt(p * q))
+	s := NewValidKeyProofStructure(big.NewInt(p * q))
 	proofBefore := s.BuildProof(big.NewInt((p-1)/2), big.NewInt((q-1)/2))
 	proofJSON, err := json.Marshal(proofBefore)
 	if err != nil {
@@ -138,7 +138,7 @@ func TestSafePrimeProofJSON(t *testing.T) {
 		return
 	}
 
-	var proofAfter SafePrimeProof
+	var proofAfter ValidKeyProof
 	err = json.Unmarshal(proofJSON, &proofAfter)
 	if err != nil {
 		t.Errorf("error during json unmarshal: %s", err.Error())
