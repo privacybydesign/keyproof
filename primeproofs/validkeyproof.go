@@ -1,7 +1,6 @@
 package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
-import "github.com/privacybydesign/keyproof/qspp"
 import "github.com/privacybydesign/gabi/big"
 
 type ValidKeyProofStructure struct {
@@ -32,7 +31,7 @@ type ValidKeyProof struct {
 	PprimeIsPrimeProof PrimeProof
 	QprimeIsPrimeProof PrimeProof
 
-	QSPPproof qspp.QuasiSafePrimeProductProof
+	QSPPproof QuasiSafePrimeProductProof
 
 	BasesValidProof IsSquareProof
 }
@@ -159,7 +158,7 @@ func (s *ValidKeyProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) Va
 	var list []*big.Int
 	var PprimeIsPrimeCommit PrimeProofCommit
 	var QprimeIsPrimeCommit PrimeProofCommit
-	var QSPPcommit qspp.QuasiSafePrimeProductCommit
+	var QSPPcommit quasiSafePrimeProductCommit
 	var BasesValidCommit isSquareProofCommit
 	list = append(list, GroupPrime)
 	list = append(list, s.N)
@@ -176,7 +175,7 @@ func (s *ValidKeyProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) Va
 	list = s.PQNRel.GenerateCommitmentsFromSecrets(g, list, &bases, &secrets)
 	list, PprimeIsPrimeCommit = s.PprimeIsPrime.GenerateCommitmentsFromSecrets(g, list, &bases, &secrets)
 	list, QprimeIsPrimeCommit = s.QprimeIsPrime.GenerateCommitmentsFromSecrets(g, list, &bases, &secrets)
-	list, QSPPcommit = qspp.QuasiSafePrimeProductBuildCommitments(list, Pprime, Qprime)
+	list, QSPPcommit = quasiSafePrimeProductBuildCommitments(list, Pprime, Qprime)
 	list, BasesValidCommit = s.BasesValid.GenerateCommitmentsFromSecrets(g, list, P, Q)
 	Follower.StepDone()
 
@@ -201,7 +200,7 @@ func (s *ValidKeyProofStructure) BuildProof(Pprime *big.Int, Qprime *big.Int) Va
 	proof.Challenge = challenge
 	proof.PprimeIsPrimeProof = s.PprimeIsPrime.BuildProof(g, challenge, PprimeIsPrimeCommit, &secrets)
 	proof.QprimeIsPrimeProof = s.QprimeIsPrime.BuildProof(g, challenge, QprimeIsPrimeCommit, &secrets)
-	proof.QSPPproof = qspp.QuasiSafePrimeProductBuildProof(Pprime, Qprime, challenge, QSPPcommit)
+	proof.QSPPproof = quasiSafePrimeProductBuildProof(Pprime, Qprime, challenge, QSPPcommit)
 	proof.BasesValidProof = s.BasesValid.BuildProof(g, challenge, BasesValidCommit)
 	Follower.StepDone()
 
@@ -231,7 +230,7 @@ func (s *ValidKeyProofStructure) VerifyProof(proof ValidKeyProof) bool {
 		!s.QprimeIsPrime.VerifyProofStructure(proof.Challenge, proof.QprimeIsPrimeProof) {
 		return false
 	}
-	if !qspp.QuasiSafePrimeProductVerifyStructure(proof.QSPPproof) {
+	if !quasiSafePrimeProductVerifyStructure(proof.QSPPproof) {
 		return false
 	}
 	if !s.BasesValid.VerifyProofStructure(proof.BasesValidProof) {
@@ -274,7 +273,7 @@ func (s *ValidKeyProofStructure) VerifyProof(proof ValidKeyProof) bool {
 	list = s.PQNRel.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs)
 	list = s.PprimeIsPrime.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs, proof.PprimeIsPrimeProof)
 	list = s.QprimeIsPrime.GenerateCommitmentsFromProof(g, list, proof.Challenge, &bases, &proofs, proof.QprimeIsPrimeProof)
-	list = qspp.QuasiSafePrimeProductExtractCommitments(list, proof.QSPPproof)
+	list = quasiSafePrimeProductExtractCommitments(list, proof.QSPPproof)
 	list = s.BasesValid.GenerateCommitmentsFromProof(g, list, proof.Challenge, proof.BasesValidProof)
 
 	Follower.StepDone()
@@ -287,5 +286,5 @@ func (s *ValidKeyProofStructure) VerifyProof(proof ValidKeyProof) bool {
 	}
 
 	// And the QSPP proof
-	return qspp.QuasiSafePrimeProductVerifyProof(s.N, proof.Challenge, proof.QSPPproof)
+	return quasiSafePrimeProductVerifyProof(s.N, proof.Challenge, proof.QSPPproof)
 }

@@ -1,4 +1,4 @@
-package qspp
+package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
 import "github.com/privacybydesign/gabi/big"
@@ -7,7 +7,7 @@ type PrimePowerProductProof struct {
 	Responses []*big.Int
 }
 
-func PrimePowerProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, index *big.Int) PrimePowerProductProof {
+func primePowerProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, index *big.Int) PrimePowerProductProof {
 	N := new(big.Int).Mul(P, Q)
 
 	// And for response generation
@@ -49,7 +49,7 @@ func PrimePowerProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, ind
 	return proof
 }
 
-func PrimePowerProductVerifyStructure(proof PrimePowerProductProof) bool {
+func primePowerProductVerifyStructure(proof PrimePowerProductProof) bool {
 	if proof.Responses == nil || len(proof.Responses) != primePowerProductIters {
 		return false
 	}
@@ -63,7 +63,7 @@ func PrimePowerProductVerifyStructure(proof PrimePowerProductProof) bool {
 	return true
 }
 
-func PrimePowerProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof PrimePowerProductProof) bool {
+func primePowerProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof PrimePowerProductProof) bool {
 	// Generate the challenges and responses
 	for i := 0; i < primePowerProductIters; i++ {
 		// Generate the challenge

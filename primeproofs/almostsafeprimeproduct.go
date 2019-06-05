@@ -1,4 +1,4 @@
-package qspp
+package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
 import "github.com/privacybydesign/gabi/big"
@@ -9,17 +9,17 @@ type AlmostSafePrimeProductProof struct {
 	Responses   []*big.Int
 }
 
-type AlmostSafePrimeProductCommit struct {
-	Nonce       *big.Int
-	Commitments []*big.Int
-	Logs        []*big.Int
+type almostSafePrimeProductCommit struct {
+	nonce       *big.Int
+	commitments []*big.Int
+	logs        []*big.Int
 }
 
-func AlmostSafePrimeProductBuildCommitments(list []*big.Int, Pprime *big.Int, Qprime *big.Int) ([]*big.Int, AlmostSafePrimeProductCommit) {
+func almostSafePrimeProductBuildCommitments(list []*big.Int, Pprime *big.Int, Qprime *big.Int) ([]*big.Int, almostSafePrimeProductCommit) {
 	// Setup proof structure
-	var commit AlmostSafePrimeProductCommit
-	commit.Commitments = []*big.Int{}
-	commit.Logs = []*big.Int{}
+	var commit almostSafePrimeProductCommit
+	commit.commitments = []*big.Int{}
+	commit.logs = []*big.Int{}
 
 	// Calculate N and phiN
 	N := new(big.Int).Mul(new(big.Int).Add(new(big.Int).Lsh(Pprime, 1), big.NewInt(1)), new(big.Int).Add(new(big.Int).Lsh(Qprime, 1), big.NewInt(1)))
@@ -27,11 +27,11 @@ func AlmostSafePrimeProductBuildCommitments(list []*big.Int, Pprime *big.Int, Qp
 
 	// Generate nonce
 	nonceMax := new(big.Int).Lsh(big.NewInt(1), almostSafePrimeProductNonceSize)
-	commit.Nonce = common.RandomBigInt(nonceMax)
+	commit.nonce = common.RandomBigInt(nonceMax)
 
 	for i := 0; i < almostSafePrimeProductIters; i++ {
 		// Calculate base from nonce
-		curc := common.GetHashNumber(commit.Nonce, nil, i, uint(N.BitLen()))
+		curc := common.GetHashNumber(commit.nonce, nil, i, uint(N.BitLen()))
 		curc.Mod(curc, N)
 
 		if new(big.Int).GCD(nil, nil, curc, N).Cmp(big.NewInt(1)) != 0 {
@@ -41,18 +41,18 @@ func AlmostSafePrimeProductBuildCommitments(list []*big.Int, Pprime *big.Int, Qp
 		log := common.RandomBigInt(phiN)
 		com := new(big.Int).Exp(curc, log, N)
 		list = append(list, com)
-		commit.Commitments = append(commit.Commitments, com)
-		commit.Logs = append(commit.Logs, log)
+		commit.commitments = append(commit.commitments, com)
+		commit.logs = append(commit.logs, log)
 	}
 
 	return list, commit
 }
 
-func AlmostSafePrimeProductBuildProof(Pprime *big.Int, Qprime *big.Int, challenge *big.Int, index *big.Int, commit AlmostSafePrimeProductCommit) AlmostSafePrimeProductProof {
+func almostSafePrimeProductBuildProof(Pprime *big.Int, Qprime *big.Int, challenge *big.Int, index *big.Int, commit almostSafePrimeProductCommit) AlmostSafePrimeProductProof {
 	// Setup proof structure
 	var proof AlmostSafePrimeProductProof
-	proof.Nonce = commit.Nonce
-	proof.Commitments = commit.Commitments
+	proof.Nonce = commit.nonce
+	proof.Commitments = commit.commitments
 	proof.Responses = []*big.Int{}
 
 	// Calculate useful constants
@@ -69,7 +69,7 @@ func AlmostSafePrimeProductBuildProof(Pprime *big.Int, Qprime *big.Int, challeng
 		// Derive challenge
 		curc := common.GetHashNumber(challenge, index, i, uint(2*N.BitLen()))
 
-		log := new(big.Int).Mod(new(big.Int).Add(commit.Logs[i], curc), phiN)
+		log := new(big.Int).Mod(new(big.Int).Add(commit.logs[i], curc), phiN)
 
 		// Calculate response
 		x1 := new(big.Int).Mod(log, oddPhiN)
@@ -99,7 +99,7 @@ func AlmostSafePrimeProductBuildProof(Pprime *big.Int, Qprime *big.Int, challeng
 	return proof
 }
 
-func AlmostSafePrimeProductVerifyStructure(proof AlmostSafePrimeProductProof) bool {
+func almostSafePrimeProductVerifyStructure(proof AlmostSafePrimeProductProof) bool {
 	if proof.Nonce == nil {
 		return false
 	}
@@ -125,11 +125,11 @@ func AlmostSafePrimeProductVerifyStructure(proof AlmostSafePrimeProductProof) bo
 	return true
 }
 
-func AlmostSafePrimeProductExtractCommitments(list []*big.Int, proof AlmostSafePrimeProductProof) []*big.Int {
+func almostSafePrimeProductExtractCommitments(list []*big.Int, proof AlmostSafePrimeProductProof) []*big.Int {
 	return append(list, proof.Commitments...)
 }
 
-func AlmostSafePrimeProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof AlmostSafePrimeProductProof) bool {
+func almostSafePrimeProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof AlmostSafePrimeProductProof) bool {
 	// Verify N=1(mod 3), as this decreases the error prob from 9/10 to 4/5
 	if new(big.Int).Mod(N, big.NewInt(3)).Cmp(big.NewInt(1)) != 0 {
 		return false

@@ -1,4 +1,4 @@
-package qspp
+package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
 import "github.com/privacybydesign/gabi/big"
@@ -7,7 +7,7 @@ type DisjointPrimeProductProof struct {
 	Responses []*big.Int
 }
 
-func DisjointPrimeProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, index *big.Int) DisjointPrimeProductProof {
+func disjointPrimeProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, index *big.Int) DisjointPrimeProductProof {
 	// Precalculate values for response
 	N := new(big.Int).Mul(P, Q)
 	phiN := new(big.Int).Mul(new(big.Int).Sub(P, big.NewInt(1)), new(big.Int).Sub(Q, big.NewInt(1)))
@@ -39,7 +39,7 @@ func DisjointPrimeProductBuildProof(P *big.Int, Q *big.Int, challenge *big.Int, 
 	return proof
 }
 
-func DisjointPrimeProductVerifyStructure(proof DisjointPrimeProductProof) bool {
+func disjointPrimeProductVerifyStructure(proof DisjointPrimeProductProof) bool {
 	if proof.Responses == nil || len(proof.Responses) != disjointPrimeProductIters {
 		return false
 	}
@@ -53,7 +53,7 @@ func DisjointPrimeProductVerifyStructure(proof DisjointPrimeProductProof) bool {
 	return true
 }
 
-func DisjointPrimeProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof DisjointPrimeProductProof) bool {
+func disjointPrimeProductVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof DisjointPrimeProductProof) bool {
 	// Check that N is not a fermat prime
 	if N.ProbablyPrime(80) {
 		return false

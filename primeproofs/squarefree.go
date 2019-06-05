@@ -1,4 +1,4 @@
-package qspp
+package primeproofs
 
 import "github.com/privacybydesign/keyproof/common"
 import "github.com/privacybydesign/gabi/big"
@@ -7,7 +7,7 @@ type SquareFreeProof struct {
 	Responses []*big.Int
 }
 
-func SquareFreeBuildProof(N *big.Int, phiN *big.Int, challenge *big.Int, index *big.Int) SquareFreeProof {
+func squareFreeBuildProof(N *big.Int, phiN *big.Int, challenge *big.Int, index *big.Int) SquareFreeProof {
 	// Precalculate the primary part of the response
 	M := new(big.Int).ModInverse(N, phiN)
 	if M == nil {
@@ -33,7 +33,7 @@ func SquareFreeBuildProof(N *big.Int, phiN *big.Int, challenge *big.Int, index *
 	return proof
 }
 
-func SquareFreeVerifyStructure(proof SquareFreeProof) bool {
+func squareFreeVerifyStructure(proof SquareFreeProof) bool {
 	if proof.Responses == nil || len(proof.Responses) != squareFreeIters {
 		return false
 	}
@@ -47,7 +47,7 @@ func SquareFreeVerifyStructure(proof SquareFreeProof) bool {
 	return true
 }
 
-func SquareFreeVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof SquareFreeProof) bool {
+func squareFreeVerifyProof(N *big.Int, challenge *big.Int, index *big.Int, proof SquareFreeProof) bool {
 	// Verify proof structure
 	if len(proof.Responses) != squareFreeIters {
 		return false
