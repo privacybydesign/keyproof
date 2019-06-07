@@ -19,31 +19,31 @@ func TestPrimeProofFlow(t *testing.T) {
 	pCommit := newPedersonSecret(g, "p", big.NewInt(p))
 	bases := newBaseMerge(&g, &pCommit)
 
-	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &pCommit)
+	listSecrets, commit := s.generateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &pCommit)
 
-	if len(listSecrets) != s.NumCommitments() {
+	if len(listSecrets) != s.numCommitments() {
 		t.Error("NumCommitments is off")
 	}
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
 	Follower.(*TestFollower).count = 0
 
-	proof := s.BuildProof(g, big.NewInt(12345), commit, &pCommit)
-	pProof := pCommit.BuildProof(g, big.NewInt(12345))
-	pProof.SetName("p")
+	proof := s.buildProof(g, big.NewInt(12345), commit, &pCommit)
+	pProof := pCommit.buildProof(g, big.NewInt(12345))
+	pProof.setName("p")
 
 	basesProof := newBaseMerge(&g, &pProof)
 
-	if !s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if !s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Proof structure rejected.\n")
 		return
 	}
 
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &pProof, proof)
+	listProof := s.generateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &pProof, proof)
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
@@ -61,9 +61,9 @@ func TestPrimeProofFake(t *testing.T) {
 
 	s := newPrimeProofStructure("p", 4)
 
-	proof := s.FakeProof(g, big.NewInt(12345))
+	proof := s.fakeProof(g, big.NewInt(12345))
 
-	if !s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if !s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Fake proof structure rejected.")
 	}
 }
@@ -77,7 +77,7 @@ func TestPrimeProofJSON(t *testing.T) {
 
 	s := newPrimeProofStructure("p", 4)
 
-	proofBefore := s.FakeProof(g, big.NewInt(12345))
+	proofBefore := s.fakeProof(g, big.NewInt(12345))
 	proofJSON, err := json.Marshal(proofBefore)
 	if err != nil {
 		t.Errorf("error during json marshal: %s", err.Error())
@@ -91,7 +91,7 @@ func TestPrimeProofJSON(t *testing.T) {
 		return
 	}
 
-	if !s.VerifyProofStructure(big.NewInt(12345), proofAfter) {
+	if !s.verifyProofStructure(big.NewInt(12345), proofAfter) {
 		t.Error("json'ed proof structure rejected")
 	}
 }
@@ -105,117 +105,117 @@ func TestPrimeProofVerify(t *testing.T) {
 
 	s := newPrimeProofStructure("p", 4)
 
-	proof := s.FakeProof(g, big.NewInt(12345))
+	proof := s.fakeProof(g, big.NewInt(12345))
 	proof.PreaCommit.Commit = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong prea pederson proof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.HalfPCommit.Commit = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong halfp pederson proof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.ACommit.Commit = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong a pederson proof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.AnegCommit.Commit = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong aneg pederson proof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.AResCommit.Commit = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong aRes pederson proof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.AnegResCommit.Commit = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong anegRes pederson proof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.PreaModResult = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting missing preamodresult")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.PreaHiderResult = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting missing preahiderresult")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.APlus1Result = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting missing aPlus1Result")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.AMin1Result = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting missing aMin1Result")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.APlus1Challenge = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting missing aPlus1Challenge")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.AMin1Challenge = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting missing aMin1Challenge")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.AMin1Challenge.Set(big.NewInt(1))
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting incorrect challenges")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.PreaRangeProof.Results = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong prearangeproof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.ARangeProof.Results = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong arangeproof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.AnegRangeProof.Results = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong anegrangeproof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.PreaModRangeProof.Results = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong preamodrangeproof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.AExpProof.ExpBitEqResult = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong aexpproof")
 	}
 
-	proof = s.FakeProof(g, big.NewInt(12345))
+	proof = s.fakeProof(g, big.NewInt(12345))
 	proof.AnegExpProof.ExpBitEqResult = nil
-	if s.VerifyProofStructure(big.NewInt(12345), proof) {
+	if s.verifyProofStructure(big.NewInt(12345), proof) {
 		t.Error("Accepting wrong anegexpproof")
 	}
 }

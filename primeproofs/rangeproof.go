@@ -3,8 +3,8 @@ package primeproofs
 import "github.com/privacybydesign/keyproof/common"
 import "github.com/privacybydesign/gabi/big"
 
-type RangeProofStructure struct {
-	RepresentationProofStructure
+type rangeProofStructure struct {
+	representationProofStructure
 	rangeSecret string
 	l1          uint
 	l2          uint
@@ -14,20 +14,20 @@ type RangeProof struct {
 	Results map[string][]*big.Int
 }
 
-type RangeCommit struct {
+type rangeCommit struct {
 	commits map[string][]*big.Int
 }
 
-type RangeCommitSecretLookup struct {
-	RangeCommit
+type rangeCommitSecretLookup struct {
+	rangeCommit
 	i int
 }
 
-func (r *RangeCommitSecretLookup) GetSecret(name string) *big.Int {
+func (r *rangeCommitSecretLookup) getSecret(name string) *big.Int {
 	return nil
 }
 
-func (r *RangeCommitSecretLookup) GetRandomizer(name string) *big.Int {
+func (r *rangeCommitSecretLookup) getRandomizer(name string) *big.Int {
 	clist, ok := r.commits[name]
 	if !ok {
 		return nil
@@ -35,21 +35,21 @@ func (r *RangeCommitSecretLookup) GetRandomizer(name string) *big.Int {
 	return clist[r.i]
 }
 
-func (s *RangeProofStructure) NumRangeProofs() int {
+func (s *rangeProofStructure) numRangeProofs() int {
 	return 1
 }
 
-func (s *RangeProofStructure) NumCommitments() int {
+func (s *rangeProofStructure) numCommitments() int {
 	return rangeProofIters
 }
 
-func (s *RangeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, RangeCommit) {
-	var commit RangeCommitSecretLookup
+func (s *rangeProofStructure) generateCommitmentsFromSecrets(g group, list []*big.Int, bases baseLookup, secretdata secretLookup) ([]*big.Int, rangeCommit) {
+	var commit rangeCommitSecretLookup
 
 	// Build up commit datastructure
 	commit.commits = map[string][]*big.Int{}
-	for _, curRhs := range s.Rhs {
-		commit.commits[curRhs.Secret] = []*big.Int{}
+	for _, curRhs := range s.rhs {
+		commit.commits[curRhs.secret] = []*big.Int{}
 	}
 
 	// Some constants for commitment generation
@@ -74,17 +74,17 @@ func (s *RangeProofStructure) GenerateCommitmentsFromSecrets(g group, list []*bi
 	secretMerge := newSecretMerge(&commit, secretdata)
 	for i := 0; i < rangeProofIters; i++ {
 		commit.i = i
-		list = s.RepresentationProofStructure.GenerateCommitmentsFromSecrets(g, list, bases, &secretMerge)
+		list = s.representationProofStructure.generateCommitmentsFromSecrets(g, list, bases, &secretMerge)
 	}
 
 	// Call the logger
 	Follower.Tick()
 
 	// Return the result
-	return list, commit.RangeCommit
+	return list, commit.rangeCommit
 }
 
-func (s *RangeProofStructure) BuildProof(g group, challenge *big.Int, commit RangeCommit, secretdata SecretLookup) RangeProof {
+func (s *rangeProofStructure) buildProof(g group, challenge *big.Int, commit rangeCommit, secretdata secretLookup) RangeProof {
 	// For every value, build up results, handling the secret data seperately
 	proof := RangeProof{map[string][]*big.Int{}}
 	for name, clist := range commit.commits {
@@ -97,7 +97,7 @@ func (s *RangeProofStructure) BuildProof(g group, challenge *big.Int, commit Ran
 			for i := 0; i < rangeProofIters; i++ {
 				var res *big.Int
 				if challenge.Bit(i) == 1 {
-					res = new(big.Int).Sub(new(big.Int).Add(clist[i], l1Offset), secretdata.GetSecret(name))
+					res = new(big.Int).Sub(new(big.Int).Add(clist[i], l1Offset), secretdata.getSecret(name))
 				} else {
 					res = new(big.Int).Set(clist[i])
 				}
@@ -108,7 +108,7 @@ func (s *RangeProofStructure) BuildProof(g group, challenge *big.Int, commit Ran
 			for i := 0; i < rangeProofIters; i++ {
 				var res *big.Int
 				if challenge.Bit(i) == 1 {
-					res = new(big.Int).Mod(new(big.Int).Sub(clist[i], secretdata.GetSecret(name)), g.order)
+					res = new(big.Int).Mod(new(big.Int).Sub(clist[i], secretdata.getSecret(name)), g.order)
 				} else {
 					res = new(big.Int).Set(clist[i])
 				}
@@ -121,39 +121,39 @@ func (s *RangeProofStructure) BuildProof(g group, challenge *big.Int, commit Ran
 	return proof
 }
 
-func (s *RangeProofStructure) FakeProof(g group) RangeProof {
+func (s *rangeProofStructure) fakeProof(g group) RangeProof {
 	// Some setup
 	genLimit := new(big.Int).Lsh(big.NewInt(1), s.l2+rangeProofEpsilon+1)
 
 	proof := RangeProof{map[string][]*big.Int{}}
-	for _, curRhs := range s.Rhs {
-		if curRhs.Secret == s.rangeSecret {
+	for _, curRhs := range s.rhs {
+		if curRhs.secret == s.rangeSecret {
 			rlist := []*big.Int{}
 			for i := 0; i < rangeProofIters; i++ {
 				rlist = append(rlist, common.RandomBigInt(genLimit))
 			}
-			proof.Results[curRhs.Secret] = rlist
+			proof.Results[curRhs.secret] = rlist
 		} else {
 			rlist := []*big.Int{}
 			for i := 0; i < rangeProofIters; i++ {
 				rlist = append(rlist, common.RandomBigInt(g.order))
 			}
-			proof.Results[curRhs.Secret] = rlist
+			proof.Results[curRhs.secret] = rlist
 		}
 	}
 
 	return proof
 }
 
-func (s *RangeProofStructure) VerifyProofStructure(proof RangeProof) bool {
+func (s *rangeProofStructure) verifyProofStructure(proof RangeProof) bool {
 	// Validate presence of map
 	if proof.Results == nil {
 		return false
 	}
 
 	// Validate presence of all values
-	for _, curRhs := range s.Rhs {
-		rlist, ok := proof.Results[curRhs.Secret]
+	for _, curRhs := range s.rhs {
+		rlist, ok := proof.Results[curRhs.secret]
 		if !ok {
 			return false
 		}
@@ -178,11 +178,11 @@ func (s *RangeProofStructure) VerifyProofStructure(proof RangeProof) bool {
 	return true
 }
 
-type RangeProofResultLookup struct {
+type rangeProofResultLookup struct {
 	Results map[string]*big.Int
 }
 
-func (r *RangeProofResultLookup) GetResult(name string) *big.Int {
+func (r *rangeProofResultLookup) getResult(name string) *big.Int {
 	res, ok := r.Results[name]
 	if !ok {
 		return nil
@@ -190,7 +190,7 @@ func (r *RangeProofResultLookup) GetResult(name string) *big.Int {
 	return res
 }
 
-func (s *RangeProofStructure) GenerateCommitmentsFromProof(g group, list []*big.Int, challenge *big.Int, bases BaseLookup, proof RangeProof) []*big.Int {
+func (s *rangeProofStructure) generateCommitmentsFromProof(g group, list []*big.Int, challenge *big.Int, bases baseLookup, proof RangeProof) []*big.Int {
 	// Some values needed in all iterations
 	resultOffset := new(big.Int).Lsh(big.NewInt(1), s.l2+rangeProofEpsilon+1)
 	l1Offset := new(big.Int).Lsh(big.NewInt(1), s.l1)
@@ -198,7 +198,7 @@ func (s *RangeProofStructure) GenerateCommitmentsFromProof(g group, list []*big.
 	// Iterate over all indices
 	for i := 0; i < rangeProofIters; i++ {
 		// Build resultLookup
-		resultLookup := RangeProofResultLookup{map[string]*big.Int{}}
+		resultLookup := rangeProofResultLookup{map[string]*big.Int{}}
 		for name, rlist := range proof.Results {
 			var res *big.Int
 			if name == s.rangeSecret {
@@ -213,7 +213,7 @@ func (s *RangeProofStructure) GenerateCommitmentsFromProof(g group, list []*big.
 		}
 
 		// And generate commitment
-		list = s.RepresentationProofStructure.GenerateCommitmentsFromProof(g, list, big.NewInt(int64(challenge.Bit(i))), bases, &resultLookup)
+		list = s.representationProofStructure.generateCommitmentsFromProof(g, list, big.NewInt(int64(challenge.Bit(i))), bases, &resultLookup)
 	}
 
 	Follower.Tick()

@@ -27,42 +27,42 @@ func TestMultiplicationProofFlow(t *testing.T) {
 	secrets := newSecretMerge(&m1, &m2, &mod, &result)
 
 	s := newMultiplicationProofStructure("m1", "m2", "mod", "result", 3)
-	if !s.IsTrue(&secrets) {
+	if !s.isTrue(&secrets) {
 		t.Error("Incorrectly assessed proof setup as incorrect.")
 	}
 
-	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
+	listSecrets, commit := s.generateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
 
-	if len(listSecrets) != s.NumCommitments() {
+	if len(listSecrets) != s.numCommitments() {
 		t.Error("NumCommitments is off")
 	}
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
 	Follower.(*TestFollower).count = 0
 
-	proof := s.BuildProof(g, big.NewInt(12345), commit, &secrets)
-	m1proof := m1.BuildProof(g, big.NewInt(12345))
-	m1proof.SetName("m1")
-	m2proof := m2.BuildProof(g, big.NewInt(12345))
-	m2proof.SetName("m2")
-	modproof := mod.BuildProof(g, big.NewInt(12345))
-	modproof.SetName("mod")
-	resultproof := result.BuildProof(g, big.NewInt(12345))
-	resultproof.SetName("result")
+	proof := s.buildProof(g, big.NewInt(12345), commit, &secrets)
+	m1proof := m1.buildProof(g, big.NewInt(12345))
+	m1proof.setName("m1")
+	m2proof := m2.buildProof(g, big.NewInt(12345))
+	m2proof.setName("m2")
+	modproof := mod.buildProof(g, big.NewInt(12345))
+	modproof.setName("mod")
+	resultproof := result.buildProof(g, big.NewInt(12345))
+	resultproof.setName("result")
 
 	basesProof := newBaseMerge(&g, &m1proof, &m2proof, &modproof, &resultproof)
 	proofdata := newProofMerge(&m1proof, &m2proof, &modproof, &resultproof)
 
-	if !s.VerifyProofStructure(proof) {
+	if !s.verifyProofStructure(proof) {
 		t.Error("Proof structure marked as invalid.\n")
 		return
 	}
 
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &proofdata, proof)
+	listProof := s.generateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &proofdata, proof)
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
@@ -80,9 +80,9 @@ func TestMultiplicationProofFake(t *testing.T) {
 
 	s := newMultiplicationProofStructure("m1", "m2", "mod", "result", 3)
 
-	proof := s.FakeProof(g)
+	proof := s.fakeProof(g)
 
-	if !s.VerifyProofStructure(proof) {
+	if !s.verifyProofStructure(proof) {
 		t.Error("Fake proof structure rejected.")
 	}
 }
@@ -97,21 +97,21 @@ func TestMultiplicationProofVerifyStructure(t *testing.T) {
 	var proof MultiplicationProof
 	s := newMultiplicationProofStructure("m1", "m2", "mod", "result", 3)
 
-	proof = s.FakeProof(g)
+	proof = s.fakeProof(g)
 	proof.ModMultProof.Commit = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting malformed ModMultProof")
 	}
 
-	proof = s.FakeProof(g)
+	proof = s.fakeProof(g)
 	proof.HiderResult = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing HiderResult")
 	}
 
-	proof = s.FakeProof(g)
+	proof = s.fakeProof(g)
 	proof.RangeProof.Results = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting malformed range proof")
 	}
 }
@@ -125,7 +125,7 @@ func TestMultiplicationProofJSON(t *testing.T) {
 
 	s := newMultiplicationProofStructure("m1", "m2", "mod", "result", 3)
 
-	proofBefore := s.FakeProof(g)
+	proofBefore := s.fakeProof(g)
 	proofJSON, err := json.Marshal(proofBefore)
 	if err != nil {
 		t.Errorf("error during json marshal: %s", err.Error())
@@ -139,7 +139,7 @@ func TestMultiplicationProofJSON(t *testing.T) {
 		return
 	}
 
-	if !s.VerifyProofStructure(proofAfter) {
+	if !s.verifyProofStructure(proofAfter) {
 		t.Error("json'ed proof structure rejected")
 	}
 }

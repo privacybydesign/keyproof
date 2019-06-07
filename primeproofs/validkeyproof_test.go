@@ -16,14 +16,14 @@ func TestValidKeyProof(t *testing.T) {
 	s := NewValidKeyProofStructure(big.NewInt(p*q), big.NewInt(a), big.NewInt(b), []*big.Int{big.NewInt(c)})
 	proof := s.BuildProof(big.NewInt((p-1)/2), big.NewInt((q-1)/2))
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
 	Follower.(*TestFollower).count = 0
 
 	ok := s.VerifyProof(proof)
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 

@@ -27,42 +27,42 @@ func TestAdditionProofFlow(t *testing.T) {
 	secrets := newSecretMerge(&a1, &a2, &mod, &result)
 
 	s := newAdditionProofStructure("a1", "a2", "mod", "result", 3)
-	if !s.IsTrue(&secrets) {
+	if !s.isTrue(&secrets) {
 		t.Error("Incorrectly assessed proof setup as incorrect.")
 	}
 
-	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
+	listSecrets, commit := s.generateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
 
-	if len(listSecrets) != s.NumCommitments() {
+	if len(listSecrets) != s.numCommitments() {
 		t.Error("NumCommitments is off")
 	}
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
 	Follower.(*TestFollower).count = 0
 
-	proof := s.BuildProof(g, big.NewInt(12345), commit, &secrets)
-	a1proof := a1.BuildProof(g, big.NewInt(12345))
-	a1proof.SetName("a1")
-	a2proof := a2.BuildProof(g, big.NewInt(12345))
-	a2proof.SetName("a2")
-	modproof := mod.BuildProof(g, big.NewInt(12345))
-	modproof.SetName("mod")
-	resultproof := result.BuildProof(g, big.NewInt(12345))
-	resultproof.SetName("result")
+	proof := s.buildProof(g, big.NewInt(12345), commit, &secrets)
+	a1proof := a1.buildProof(g, big.NewInt(12345))
+	a1proof.setName("a1")
+	a2proof := a2.buildProof(g, big.NewInt(12345))
+	a2proof.setName("a2")
+	modproof := mod.buildProof(g, big.NewInt(12345))
+	modproof.setName("mod")
+	resultproof := result.buildProof(g, big.NewInt(12345))
+	resultproof.setName("result")
 
 	basesProof := newBaseMerge(&g, &a1proof, &a2proof, &modproof, &resultproof)
 	proofdata := newProofMerge(&a1proof, &a2proof, &modproof, &resultproof)
 
-	if !s.VerifyProofStructure(proof) {
+	if !s.verifyProofStructure(proof) {
 		t.Error("Proof structure marked as invalid.\n")
 		return
 	}
 
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &proofdata, proof)
+	listProof := s.generateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &basesProof, &proofdata, proof)
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
@@ -83,19 +83,19 @@ func TestAdditionProofVerifyStructure(t *testing.T) {
 	proof.HiderResult = big.NewInt(1)
 
 	s := newAdditionProofStructure("a1", "a2", "mod", "result", 3)
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing rangeproof.\n")
 	}
 
-	proof.RangeProof = s.addRange.FakeProof(g)
+	proof.RangeProof = s.addRange.fakeProof(g)
 	proof.ModAddResult = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing modaddresult.\n")
 	}
 
 	proof.ModAddResult = proof.HiderResult
 	proof.HiderResult = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing hiderresult.\n")
 	}
 }
@@ -109,9 +109,9 @@ func TestAdditionProofFake(t *testing.T) {
 
 	s := newAdditionProofStructure("a1", "a2", "mod", "result", 3)
 
-	proof := s.FakeProof(g)
+	proof := s.fakeProof(g)
 
-	if !s.VerifyProofStructure(proof) {
+	if !s.verifyProofStructure(proof) {
 		t.Error("Rejecting fake proof structure.\n")
 	}
 }
@@ -125,7 +125,7 @@ func TestAdditionProofJSON(t *testing.T) {
 
 	s := newAdditionProofStructure("a1", "a2", "mod", "result", 3)
 
-	proofBefore := s.FakeProof(g)
+	proofBefore := s.fakeProof(g)
 
 	proofJSON, err := json.Marshal(proofBefore)
 	if err != nil {
@@ -140,7 +140,7 @@ func TestAdditionProofJSON(t *testing.T) {
 		return
 	}
 
-	if !s.VerifyProofStructure(proofAfter) {
+	if !s.verifyProofStructure(proofAfter) {
 		t.Error("json'ed proof structure invalid")
 	}
 }

@@ -22,40 +22,40 @@ func TestExpStepAFlow(t *testing.T) {
 
 	s := newExpStepAStructure("bit", "pre", "post")
 
-	if !s.IsTrue(&secrets) {
+	if !s.isTrue(&secrets) {
 		t.Error("Statement validity rejected")
 	}
 
-	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
+	listSecrets, commit := s.generateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
 
-	if len(listSecrets) != s.NumCommitments() {
+	if len(listSecrets) != s.numCommitments() {
 		t.Error("NumCommitments is off")
 	}
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
 	Follower.(*TestFollower).count = 0
 
-	proof := s.BuildProof(g, big.NewInt(12345), commit, &secrets)
+	proof := s.buildProof(g, big.NewInt(12345), commit, &secrets)
 
-	if !s.VerifyProofStructure(proof) {
+	if !s.verifyProofStructure(proof) {
 		t.Error("Proof structure rejected.")
 		return
 	}
 
-	bitProof := bitPederson.BuildProof(g, big.NewInt(12345))
-	bitProof.SetName("bit")
-	preProof := prePederson.BuildProof(g, big.NewInt(12345))
-	preProof.SetName("pre")
-	postProof := postPederson.BuildProof(g, big.NewInt(12345))
-	postProof.SetName("post")
+	bitProof := bitPederson.buildProof(g, big.NewInt(12345))
+	bitProof.setName("bit")
+	preProof := prePederson.buildProof(g, big.NewInt(12345))
+	preProof.setName("pre")
+	postProof := postPederson.buildProof(g, big.NewInt(12345))
+	postProof.setName("post")
 
 	proofBases := newBaseMerge(&g, &bitProof, &preProof, &postProof)
 
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, proof)
+	listProof := s.generateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, proof)
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
@@ -73,8 +73,8 @@ func TestExpStepAFake(t *testing.T) {
 
 	s := newExpStepAStructure("bit", "pre", "post")
 
-	proof := s.FakeProof(g)
-	if !s.VerifyProofStructure(proof) {
+	proof := s.fakeProof(g)
+	if !s.verifyProofStructure(proof) {
 		t.Error("Fake proof structure rejected.")
 	}
 }
@@ -88,21 +88,21 @@ func TestExpStepAJSON(t *testing.T) {
 
 	s := newExpStepAStructure("bit", "pre", "post")
 
-	proofBefore := s.FakeProof(g)
+	proofBefore := s.fakeProof(g)
 	proofJSON, err := json.Marshal(proofBefore)
 	if err != nil {
 		t.Errorf("error during json marshal: %s", err.Error())
 		return
 	}
 
-	var proofAfter expStepAProof
+	var proofAfter ExpStepAProof
 	err = json.Unmarshal(proofJSON, &proofAfter)
 	if err != nil {
 		t.Errorf("error during json unmarshal: %s", err.Error())
 		return
 	}
 
-	if !s.VerifyProofStructure(proofAfter) {
+	if !s.verifyProofStructure(proofAfter) {
 		t.Error("json'ed proof structure rejected.")
 	}
 }
@@ -116,16 +116,16 @@ func TestExpStepAVerifyStructure(t *testing.T) {
 
 	s := newExpStepAStructure("bit", "pre", "post")
 
-	proof := s.FakeProof(g)
+	proof := s.fakeProof(g)
 
 	proof.BitHiderResult = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing bithiderresult")
 	}
 
 	proof.BitHiderResult = proof.EqualityHiderResult
 	proof.EqualityHiderResult = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing equalityhiderresult")
 	}
 }

@@ -8,12 +8,12 @@ type expStepBStructure struct {
 	bitname    string
 	mulname    string
 	myname     string
-	bitRep     RepresentationProofStructure
-	mulRep     RepresentationProofStructure
-	prePostMul MultiplicationProofStructure
+	bitRep     representationProofStructure
+	mulRep     representationProofStructure
+	prePostMul multiplicationProofStructure
 }
 
-type expStepBProof struct {
+type ExpStepBProof struct {
 	bitname             string
 	mulname             string
 	mulhidername        string
@@ -27,13 +27,13 @@ type expStepBCommit struct {
 	bitname              string
 	mulname              string
 	mulhidername         string
-	MulRandomizer        *big.Int
-	MulHiderRandomizer   *big.Int
-	BitHiderRandomizer   *big.Int
-	MultiplicationCommit MultiplicationProofCommit
+	mulRandomizer        *big.Int
+	mulHiderRandomizer   *big.Int
+	bitHiderRandomizer   *big.Int
+	multiplicationCommit multiplicationProofCommit
 }
 
-func (p *expStepBProof) GetResult(name string) *big.Int {
+func (p *ExpStepBProof) getResult(name string) *big.Int {
 	if name == p.bitname {
 		return p.BitHiderResult
 	}
@@ -46,19 +46,19 @@ func (p *expStepBProof) GetResult(name string) *big.Int {
 	return nil
 }
 
-func (c *expStepBCommit) GetSecret(name string) *big.Int {
+func (c *expStepBCommit) getSecret(name string) *big.Int {
 	return nil
 }
 
-func (c *expStepBCommit) GetRandomizer(name string) *big.Int {
+func (c *expStepBCommit) getRandomizer(name string) *big.Int {
 	if name == c.bitname {
-		return c.BitHiderRandomizer
+		return c.bitHiderRandomizer
 	}
 	if name == c.mulname {
-		return c.MulRandomizer
+		return c.mulRandomizer
 	}
 	if name == c.mulhidername {
-		return c.MulHiderRandomizer
+		return c.mulHiderRandomizer
 	}
 	return nil
 }
@@ -68,13 +68,13 @@ func newExpStepBStructure(bitname, prename, postname, mulname, modname string, b
 	structure.bitname = bitname
 	structure.mulname = mulname
 	structure.myname = strings.Join([]string{bitname, prename, postname, "expb"}, "_")
-	structure.bitRep = RepresentationProofStructure{
-		[]LhsContribution{
-			LhsContribution{bitname, big.NewInt(1)},
-			LhsContribution{"g", big.NewInt(-1)},
+	structure.bitRep = representationProofStructure{
+		[]lhsContribution{
+			lhsContribution{bitname, big.NewInt(1)},
+			lhsContribution{"g", big.NewInt(-1)},
 		},
-		[]RhsContribution{
-			RhsContribution{"h", strings.Join([]string{bitname, "hider"}, "_"), 1},
+		[]rhsContribution{
+			rhsContribution{"h", strings.Join([]string{bitname, "hider"}, "_"), 1},
 		},
 	}
 	structure.mulRep = newPedersonRepresentationProofStructure(mulname)
@@ -82,101 +82,101 @@ func newExpStepBStructure(bitname, prename, postname, mulname, modname string, b
 	return structure
 }
 
-func (s *expStepBStructure) NumRangeProofs() int {
-	return s.prePostMul.NumRangeProofs()
+func (s *expStepBStructure) numRangeProofs() int {
+	return s.prePostMul.numRangeProofs()
 }
 
-func (s *expStepBStructure) NumCommitments() int {
-	return s.bitRep.NumCommitments() + s.mulRep.NumCommitments() + s.prePostMul.NumCommitments()
+func (s *expStepBStructure) numCommitments() int {
+	return s.bitRep.numCommitments() + s.mulRep.numCommitments() + s.prePostMul.numCommitments()
 }
 
-func (s *expStepBStructure) GenerateCommitmentsFromSecrets(g group, list []*big.Int, bases BaseLookup, secretdata SecretLookup) ([]*big.Int, expStepBCommit) {
+func (s *expStepBStructure) generateCommitmentsFromSecrets(g group, list []*big.Int, bases baseLookup, secretdata secretLookup) ([]*big.Int, expStepBCommit) {
 	var commit expStepBCommit
 
 	// build up commit structure
 	commit.bitname = strings.Join([]string{s.bitname, "hider"}, "_")
 	commit.mulname = s.mulname
 	commit.mulhidername = strings.Join([]string{s.mulname, "hider"}, "_")
-	commit.MulRandomizer = common.RandomBigInt(g.order)
-	commit.MulHiderRandomizer = common.RandomBigInt(g.order)
-	commit.BitHiderRandomizer = common.RandomBigInt(g.order)
+	commit.mulRandomizer = common.RandomBigInt(g.order)
+	commit.mulHiderRandomizer = common.RandomBigInt(g.order)
+	commit.bitHiderRandomizer = common.RandomBigInt(g.order)
 
 	// Inner secrets
 	secrets := newSecretMerge(&commit, secretdata)
 
 	// Generate commitment list
-	list = s.bitRep.GenerateCommitmentsFromSecrets(g, list, bases, &secrets)
-	list = s.mulRep.GenerateCommitmentsFromSecrets(g, list, bases, &secrets)
-	list, commit.MultiplicationCommit = s.prePostMul.GenerateCommitmentsFromSecrets(g, list, bases, &secrets)
+	list = s.bitRep.generateCommitmentsFromSecrets(g, list, bases, &secrets)
+	list = s.mulRep.generateCommitmentsFromSecrets(g, list, bases, &secrets)
+	list, commit.multiplicationCommit = s.prePostMul.generateCommitmentsFromSecrets(g, list, bases, &secrets)
 
 	return list, commit
 }
 
-func (s *expStepBStructure) BuildProof(g group, challenge *big.Int, commit expStepBCommit, secretdata SecretLookup) expStepBProof {
+func (s *expStepBStructure) buildProof(g group, challenge *big.Int, commit expStepBCommit, secretdata secretLookup) ExpStepBProof {
 	// inner secrets
 	secrets := newSecretMerge(&commit, secretdata)
 
 	// Build proof
-	var proof expStepBProof
+	var proof ExpStepBProof
 	proof.MulResult = new(big.Int).Mod(
 		new(big.Int).Sub(
-			commit.MulRandomizer,
+			commit.mulRandomizer,
 			new(big.Int).Mul(
 				challenge,
-				secretdata.GetSecret(s.mulname))),
+				secretdata.getSecret(s.mulname))),
 		g.order)
 	proof.MulHiderResult = new(big.Int).Mod(
 		new(big.Int).Sub(
-			commit.MulHiderRandomizer,
+			commit.mulHiderRandomizer,
 			new(big.Int).Mul(
 				challenge,
-				secretdata.GetSecret(strings.Join([]string{s.mulname, "hider"}, "_")))),
+				secretdata.getSecret(strings.Join([]string{s.mulname, "hider"}, "_")))),
 		g.order)
 	proof.BitHiderResult = new(big.Int).Mod(
 		new(big.Int).Sub(
-			commit.BitHiderRandomizer,
+			commit.bitHiderRandomizer,
 			new(big.Int).Mul(
 				challenge,
-				secretdata.GetSecret(strings.Join([]string{s.bitname, "hider"}, "_")))),
+				secretdata.getSecret(strings.Join([]string{s.bitname, "hider"}, "_")))),
 		g.order)
-	proof.MultiplicationProof = s.prePostMul.BuildProof(g, challenge, commit.MultiplicationCommit, &secrets)
+	proof.MultiplicationProof = s.prePostMul.buildProof(g, challenge, commit.multiplicationCommit, &secrets)
 	return proof
 }
 
-func (s *expStepBStructure) FakeProof(g group) expStepBProof {
-	var proof expStepBProof
+func (s *expStepBStructure) fakeProof(g group) ExpStepBProof {
+	var proof ExpStepBProof
 	proof.MulResult = common.RandomBigInt(g.order)
 	proof.MulHiderResult = common.RandomBigInt(g.order)
 	proof.BitHiderResult = common.RandomBigInt(g.order)
-	proof.MultiplicationProof = s.prePostMul.FakeProof(g)
+	proof.MultiplicationProof = s.prePostMul.fakeProof(g)
 	return proof
 }
 
-func (s *expStepBStructure) VerifyProofStructure(proof expStepBProof) bool {
-	if !s.prePostMul.VerifyProofStructure(proof.MultiplicationProof) {
+func (s *expStepBStructure) verifyProofStructure(proof ExpStepBProof) bool {
+	if !s.prePostMul.verifyProofStructure(proof.MultiplicationProof) {
 		return false
 	}
 
 	return proof.MulResult != nil && proof.MulHiderResult != nil && proof.BitHiderResult != nil
 }
 
-func (s *expStepBStructure) GenerateCommitmentsFromProof(g group, list []*big.Int, challenge *big.Int, bases BaseLookup, proof expStepBProof) []*big.Int {
+func (s *expStepBStructure) generateCommitmentsFromProof(g group, list []*big.Int, challenge *big.Int, bases baseLookup, proof ExpStepBProof) []*big.Int {
 	// inner proof
 	proof.bitname = strings.Join([]string{s.bitname, "hider"}, "_")
 	proof.mulname = s.mulname
 	proof.mulhidername = strings.Join([]string{s.mulname, "hider"}, "_")
 
 	// Generate commitments
-	list = s.bitRep.GenerateCommitmentsFromProof(g, list, challenge, bases, &proof)
-	list = s.mulRep.GenerateCommitmentsFromProof(g, list, challenge, bases, &proof)
-	list = s.prePostMul.GenerateCommitmentsFromProof(g, list, challenge, bases, &proof, proof.MultiplicationProof)
+	list = s.bitRep.generateCommitmentsFromProof(g, list, challenge, bases, &proof)
+	list = s.mulRep.generateCommitmentsFromProof(g, list, challenge, bases, &proof)
+	list = s.prePostMul.generateCommitmentsFromProof(g, list, challenge, bases, &proof, proof.MultiplicationProof)
 
 	return list
 }
 
-func (s *expStepBStructure) IsTrue(secretdata SecretLookup) bool {
-	if secretdata.GetSecret(s.bitname).Cmp(big.NewInt(1)) != 0 {
+func (s *expStepBStructure) isTrue(secretdata secretLookup) bool {
+	if secretdata.getSecret(s.bitname).Cmp(big.NewInt(1)) != 0 {
 		return false
 	}
-	return s.prePostMul.IsTrue(secretdata)
+	return s.prePostMul.isTrue(secretdata)
 }

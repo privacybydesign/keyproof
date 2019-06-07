@@ -9,7 +9,7 @@ type RangeTestSecret struct {
 	randomizers map[string]*big.Int
 }
 
-func (rs *RangeTestSecret) GetSecret(name string) *big.Int {
+func (rs *RangeTestSecret) getSecret(name string) *big.Int {
 	res, ok := rs.secrets[name]
 	if ok {
 		return res
@@ -17,7 +17,7 @@ func (rs *RangeTestSecret) GetSecret(name string) *big.Int {
 	return nil
 }
 
-func (rs *RangeTestSecret) GetRandomizer(name string) *big.Int {
+func (rs *RangeTestSecret) getRandomizer(name string) *big.Int {
 	res, ok := rs.randomizers[name]
 	if ok {
 		return res
@@ -29,21 +29,21 @@ type RangeTestCommit struct {
 	commits map[string]*big.Int
 }
 
-func (rc *RangeTestCommit) Names() (ret []string) {
+func (rc *RangeTestCommit) names() (ret []string) {
 	for name := range rc.commits {
 		ret = append(ret, name)
 	}
 	return
 }
-func (rc *RangeTestCommit) GetBase(name string) *big.Int {
+func (rc *RangeTestCommit) getBase(name string) *big.Int {
 	res, ok := rc.commits[name]
 	if ok {
 		return res
 	}
 	return nil
 }
-func (rc *RangeTestCommit) Exp(ret *big.Int, name string, exp, P *big.Int) bool {
-	base := rc.GetBase(name)
+func (rc *RangeTestCommit) exp(ret *big.Int, name string, exp, P *big.Int) bool {
+	base := rc.getBase(name)
 	ret.Exp(base, exp, P)
 	return true
 }
@@ -72,12 +72,12 @@ func TestRangeProofBasic(t *testing.T) {
 
 	Follower.(*TestFollower).count = 0
 
-	var s RangeProofStructure
-	s.Lhs = []LhsContribution{
-		LhsContribution{"x", big.NewInt(1)},
+	var s rangeProofStructure
+	s.lhs = []lhsContribution{
+		lhsContribution{"x", big.NewInt(1)},
 	}
-	s.Rhs = []RhsContribution{
-		RhsContribution{"g", "x", 1},
+	s.rhs = []rhsContribution{
+		rhsContribution{"g", "x", 1},
 	}
 	s.rangeSecret = "x"
 	s.l1 = 3
@@ -91,36 +91,36 @@ func TestRangeProofBasic(t *testing.T) {
 
 	var commit RangeTestCommit
 	commit.commits = map[string]*big.Int{
-		"x": new(big.Int).Exp(g.g, big.NewInt(7), g.P),
+		"x": new(big.Int).Exp(g.g, big.NewInt(7), g.p),
 	}
 
 	bases := newBaseMerge(&g, &commit)
 
-	if !s.IsTrue(g, &bases, &secret) {
+	if !s.isTrue(g, &bases, &secret) {
 		t.Error("Statement incorrectly declared false")
 	}
 
-	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+	listSecret, rpcommit := s.generateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
 
-	if len(listSecret) != s.NumCommitments() {
+	if len(listSecret) != s.numCommitments() {
 		t.Error("NumCommitments is off")
 	}
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
 	Follower.(*TestFollower).count = 0
 
-	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
+	proof := s.buildProof(g, big.NewInt(12345), rpcommit, &secret)
 
-	if !s.VerifyProofStructure(proof) {
+	if !s.verifyProofStructure(proof) {
 		t.Error("Proof structure rejected")
 		return
 	}
 
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
+	listProof := s.generateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
@@ -138,13 +138,13 @@ func TestRangeProofComplex(t *testing.T) {
 
 	Follower.(*TestFollower).count = 0
 
-	var s RangeProofStructure
-	s.Lhs = []LhsContribution{
-		LhsContribution{"c", big.NewInt(1)},
+	var s rangeProofStructure
+	s.lhs = []lhsContribution{
+		lhsContribution{"c", big.NewInt(1)},
 	}
-	s.Rhs = []RhsContribution{
-		RhsContribution{"g", "x", 1},
-		RhsContribution{"h", "xh", 1},
+	s.rhs = []rhsContribution{
+		rhsContribution{"g", "x", 1},
+		rhsContribution{"h", "xh", 1},
 	}
 	s.l1 = 3
 	s.l2 = 2
@@ -160,38 +160,38 @@ func TestRangeProofComplex(t *testing.T) {
 	commit.commits = map[string]*big.Int{
 		"c": new(big.Int).Mod(
 			new(big.Int).Mul(
-				new(big.Int).Exp(g.g, big.NewInt(7), g.P),
-				new(big.Int).Exp(g.h, big.NewInt(21), g.P)),
-			g.P),
+				new(big.Int).Exp(g.g, big.NewInt(7), g.p),
+				new(big.Int).Exp(g.h, big.NewInt(21), g.p)),
+			g.p),
 	}
 
 	bases := newBaseMerge(&g, &commit)
 
-	if !s.IsTrue(g, &bases, &secret) {
+	if !s.isTrue(g, &bases, &secret) {
 		t.Error("Statement incorrectly declared false")
 	}
 
-	listSecret, rpcommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
+	listSecret, rpcommit := s.generateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secret)
 
-	if len(listSecret) != s.NumCommitments() {
+	if len(listSecret) != s.numCommitments() {
 		t.Error("NumCommitments is off")
 	}
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
 	Follower.(*TestFollower).count = 0
 
-	proof := s.BuildProof(g, big.NewInt(12345), rpcommit, &secret)
+	proof := s.buildProof(g, big.NewInt(12345), rpcommit, &secret)
 
-	if !s.VerifyProofStructure(proof) {
+	if !s.verifyProofStructure(proof) {
 		t.Error("Proof structure rejected")
 		return
 	}
 
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
+	listProof := s.generateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &bases, proof)
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
@@ -202,31 +202,31 @@ func TestRangeProofComplex(t *testing.T) {
 
 func TestRangeProofVerifyStructureEmpty(t *testing.T) {
 	var proof RangeProof
-	var s RangeProofStructure
-	s.Lhs = []LhsContribution{
-		LhsContribution{"c", big.NewInt(1)},
+	var s rangeProofStructure
+	s.lhs = []lhsContribution{
+		lhsContribution{"c", big.NewInt(1)},
 	}
-	s.Rhs = []RhsContribution{
-		RhsContribution{"g", "x", 1},
-		RhsContribution{"h", "xh", 1},
+	s.rhs = []rhsContribution{
+		rhsContribution{"g", "x", 1},
+		rhsContribution{"h", "xh", 1},
 	}
 	s.l1 = 3
 	s.l2 = 2
 
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting empty proof")
 	}
 }
 
 func TestRangeProofVerifyStructureMissingVar(t *testing.T) {
 	var proof RangeProof
-	var s RangeProofStructure
-	s.Lhs = []LhsContribution{
-		LhsContribution{"c", big.NewInt(1)},
+	var s rangeProofStructure
+	s.lhs = []lhsContribution{
+		lhsContribution{"c", big.NewInt(1)},
 	}
-	s.Rhs = []RhsContribution{
-		RhsContribution{"g", "x", 1},
-		RhsContribution{"h", "xh", 1},
+	s.rhs = []rhsContribution{
+		rhsContribution{"g", "x", 1},
+		rhsContribution{"h", "xh", 1},
 	}
 	s.l1 = 3
 	s.l2 = 2
@@ -240,20 +240,20 @@ func TestRangeProofVerifyStructureMissingVar(t *testing.T) {
 		"x": tlist,
 	}
 
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing variable in proof")
 	}
 }
 
 func TestRangeProofVerifyStructureTooShortVar(t *testing.T) {
 	var proof RangeProof
-	var s RangeProofStructure
-	s.Lhs = []LhsContribution{
-		LhsContribution{"c", big.NewInt(1)},
+	var s rangeProofStructure
+	s.lhs = []lhsContribution{
+		lhsContribution{"c", big.NewInt(1)},
 	}
-	s.Rhs = []RhsContribution{
-		RhsContribution{"g", "x", 1},
-		RhsContribution{"h", "xh", 1},
+	s.rhs = []rhsContribution{
+		rhsContribution{"g", "x", 1},
+		rhsContribution{"h", "xh", 1},
 	}
 	s.l1 = 3
 	s.l2 = 2
@@ -268,7 +268,7 @@ func TestRangeProofVerifyStructureTooShortVar(t *testing.T) {
 		"xh": tlist[:len(tlist)-1],
 	}
 
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting variable with too few results in proof")
 	}
 
@@ -276,20 +276,20 @@ func TestRangeProofVerifyStructureTooShortVar(t *testing.T) {
 		"x":  tlist[:len(tlist)-1],
 		"xh": tlist,
 	}
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting variable with too few results in proof")
 	}
 }
 
 func TestRangeProofVerifyStructureMissingNo(t *testing.T) {
 	var proof RangeProof
-	var s RangeProofStructure
-	s.Lhs = []LhsContribution{
-		LhsContribution{"c", big.NewInt(1)},
+	var s rangeProofStructure
+	s.lhs = []lhsContribution{
+		lhsContribution{"c", big.NewInt(1)},
 	}
-	s.Rhs = []RhsContribution{
-		RhsContribution{"g", "x", 1},
-		RhsContribution{"h", "xh", 1},
+	s.rhs = []rhsContribution{
+		rhsContribution{"g", "x", 1},
+		rhsContribution{"h", "xh", 1},
 	}
 	s.l1 = 3
 	s.l2 = 2
@@ -311,7 +311,7 @@ func TestRangeProofVerifyStructureMissingNo(t *testing.T) {
 		"xh": tlist,
 	}
 
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting variable with missing numbers in proof")
 	}
 }
@@ -323,19 +323,19 @@ func TestRangeProofFake(t *testing.T) {
 		return
 	}
 
-	var s RangeProofStructure
-	s.Lhs = []LhsContribution{
-		LhsContribution{"c", big.NewInt(1)},
+	var s rangeProofStructure
+	s.lhs = []lhsContribution{
+		lhsContribution{"c", big.NewInt(1)},
 	}
-	s.Rhs = []RhsContribution{
-		RhsContribution{"g", "x", 1},
-		RhsContribution{"h", "xh", 1},
+	s.rhs = []rhsContribution{
+		rhsContribution{"g", "x", 1},
+		rhsContribution{"h", "xh", 1},
 	}
 	s.l1 = 3
 	s.l2 = 2
 
-	proof := s.FakeProof(g)
-	if !s.VerifyProofStructure(proof) {
+	proof := s.fakeProof(g)
+	if !s.verifyProofStructure(proof) {
 		t.Error("Fake proof structure rejected.")
 	}
 }
@@ -347,18 +347,18 @@ func TestRangeProofJSON(t *testing.T) {
 		return
 	}
 
-	var s RangeProofStructure
-	s.Lhs = []LhsContribution{
-		LhsContribution{"c", big.NewInt(1)},
+	var s rangeProofStructure
+	s.lhs = []lhsContribution{
+		lhsContribution{"c", big.NewInt(1)},
 	}
-	s.Rhs = []RhsContribution{
-		RhsContribution{"g", "x", 1},
-		RhsContribution{"h", "xh", 1},
+	s.rhs = []rhsContribution{
+		rhsContribution{"g", "x", 1},
+		rhsContribution{"h", "xh", 1},
 	}
 	s.l1 = 3
 	s.l2 = 2
 
-	proofBefore := s.FakeProof(g)
+	proofBefore := s.fakeProof(g)
 	proofJSON, err := json.Marshal(proofBefore)
 	if err != nil {
 		t.Errorf("error during json marshal: %s", err.Error())
@@ -372,7 +372,7 @@ func TestRangeProofJSON(t *testing.T) {
 		return
 	}
 
-	if !s.VerifyProofStructure(proofAfter) {
+	if !s.verifyProofStructure(proofAfter) {
 		t.Error("json'ed proof structure rejected")
 	}
 }

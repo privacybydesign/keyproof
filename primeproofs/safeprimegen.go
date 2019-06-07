@@ -8,12 +8,12 @@ const convenientRange = 100
 
 // A convenient safe prime is a safe prime of the form
 // 2^exp - diff for small positive diff.
-type ConvenientSafePrime struct {
+type convenientSafePrime struct {
 	Exp  int
 	Diff int
 }
 
-var convenientSafePrimes = []ConvenientSafePrime{
+var convenientSafePrimes = []convenientSafePrime{
 	{787, 7341},
 	{836, 12077},
 	{912, 7577},

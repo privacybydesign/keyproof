@@ -13,20 +13,20 @@ func TestPedersonSecret(t *testing.T) {
 
 	testSecret := newPedersonSecret(g, "x", big.NewInt(15))
 
-	x := testSecret.GetSecret("x")
+	x := testSecret.getSecret("x")
 	if x == nil || x.Cmp(big.NewInt(15)) != 0 {
 		t.Error("Improper inclusion of secret.")
 	}
-	if testSecret.GetRandomizer("x") == nil {
+	if testSecret.getRandomizer("x") == nil {
 		t.Error("Missing randomizer for secret")
 	}
-	if testSecret.GetSecret("x_hider") == nil {
+	if testSecret.getSecret("x_hider") == nil {
 		t.Error("Missing hider")
 	}
-	if testSecret.GetRandomizer("x") == nil {
+	if testSecret.getRandomizer("x") == nil {
 		t.Error("Missing ramdomizer for hider")
 	}
-	if testSecret.GetBase("x") == nil {
+	if testSecret.getBase("x") == nil {
 		t.Error("Missing commitment")
 	}
 }
@@ -39,19 +39,19 @@ func TestPedersonProof(t *testing.T) {
 	}
 
 	testSecret := newPedersonSecret(g, "x", big.NewInt(15))
-	listSecrets := testSecret.GenerateCommitments([]*big.Int{})
-	testProof := testSecret.BuildProof(g, big.NewInt(1))
-	listProof := testProof.GenerateCommitments([]*big.Int{})
+	listSecrets := testSecret.generateCommitments([]*big.Int{})
+	testProof := testSecret.buildProof(g, big.NewInt(1))
+	listProof := testProof.generateCommitments([]*big.Int{})
 
-	testProof.SetName("x")
+	testProof.setName("x")
 
-	if testProof.GetBase("x") == nil {
+	if testProof.getBase("x") == nil {
 		t.Error("Missing commitment")
 	}
-	if testProof.GetResult("x") == nil {
+	if testProof.getResult("x") == nil {
 		t.Error("Missing result for secret")
 	}
-	if testProof.GetResult("x_hider") == nil {
+	if testProof.getResult("x_hider") == nil {
 		t.Error("Missing result for hider")
 	}
 	if !listCmp(listSecrets, listProof) {
@@ -67,20 +67,20 @@ func TestPedersonRepresentationFlow(t *testing.T) {
 	}
 
 	testSecret := newPedersonSecret(g, "x", big.NewInt(15))
-	testProof := testSecret.BuildProof(g, big.NewInt(2))
-	testProof.SetName("x")
+	testProof := testSecret.buildProof(g, big.NewInt(2))
+	testProof.setName("x")
 
 	secretBases := newBaseMerge(&g, &testSecret)
 	proofBases := newBaseMerge(&g, &testProof)
 
 	s := newPedersonRepresentationProofStructure("x")
 
-	if !s.IsTrue(g, &secretBases, &testSecret) {
+	if !s.isTrue(g, &secretBases, &testSecret) {
 		t.Error("Attempted proof is false")
 	}
 
-	secretCommit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &secretBases, &testSecret)
-	proofCommit := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(2), &proofBases, &testProof)
+	secretCommit := s.generateCommitmentsFromSecrets(g, []*big.Int{}, &secretBases, &testSecret)
+	proofCommit := s.generateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(2), &proofBases, &testProof)
 
 	if secretCommit[0].Cmp(proofCommit[0]) != 0 {
 		t.Error("Commitments disagree")
@@ -95,21 +95,21 @@ func TestPedersonRangeFlow(t *testing.T) {
 	}
 
 	testSecret := newPedersonSecret(g, "x", big.NewInt(15))
-	testProof := testSecret.BuildProof(g, big.NewInt(2))
-	testProof.SetName("x")
+	testProof := testSecret.buildProof(g, big.NewInt(2))
+	testProof.setName("x")
 
 	secretBases := newBaseMerge(&g, &testSecret)
 	proofBases := newBaseMerge(&g, &testProof)
 
 	s := newPedersonRangeProofStructure("x", 4, 2)
 
-	if !s.IsTrue(g, &secretBases, &testSecret) {
+	if !s.isTrue(g, &secretBases, &testSecret) {
 		t.Error("Attempted proof is false")
 	}
 
-	secretCommit, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &secretBases, &testSecret)
-	proof := s.BuildProof(g, big.NewInt(12345), commit, &testSecret)
-	proofCommit := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, proof)
+	secretCommit, commit := s.generateCommitmentsFromSecrets(g, []*big.Int{}, &secretBases, &testSecret)
+	proof := s.buildProof(g, big.NewInt(12345), commit, &testSecret)
+	proofCommit := s.generateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, proof)
 
 	if !listCmp(secretCommit, proofCommit) {
 		t.Error("Commitments disagree")
@@ -125,19 +125,19 @@ func TestPedersonProofVerifyStructure(t *testing.T) {
 	proof.Hresult = testInt
 
 	proof.Commit = nil
-	if proof.VerifyStructure() {
+	if proof.verifyStructure() {
 		t.Error("Accepted emtpy commit")
 	}
 	proof.Commit = testInt
 
 	proof.Sresult = nil
-	if proof.VerifyStructure() {
+	if proof.verifyStructure() {
 		t.Error("Accepted empty Sresult")
 	}
 	proof.Sresult = testInt
 
 	proof.Hresult = nil
-	if proof.VerifyStructure() {
+	if proof.verifyStructure() {
 		t.Error("Accepted empty Hresult")
 	}
 }
@@ -150,7 +150,7 @@ func TestPedersonProofFake(t *testing.T) {
 	}
 
 	proof := newPedersonFakeProof(g)
-	ok := proof.VerifyStructure()
+	ok := proof.verifyStructure()
 	if !ok {
 		t.Error("Fake proof structure rejected")
 	}
@@ -177,7 +177,7 @@ func TestPedersonProofJSON(t *testing.T) {
 		return
 	}
 
-	if !proofAfter.VerifyStructure() {
+	if !proofAfter.verifyStructure() {
 		t.Error("json'ed proof structure rejected")
 	}
 }

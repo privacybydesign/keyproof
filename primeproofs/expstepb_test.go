@@ -24,44 +24,44 @@ func TestExpStepBFlow(t *testing.T) {
 
 	s := newExpStepBStructure("bit", "pre", "post", "mul", "mod", 4)
 
-	if !s.IsTrue(&secrets) {
+	if !s.isTrue(&secrets) {
 		t.Error("Proof premis rejected")
 	}
 
-	listSecrets, commit := s.GenerateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
+	listSecrets, commit := s.generateCommitmentsFromSecrets(g, []*big.Int{}, &bases, &secrets)
 
-	if len(listSecrets) != s.NumCommitments() {
+	if len(listSecrets) != s.numCommitments() {
 		t.Error("NumCommitments is off")
 	}
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off GenerateCommitmentsFromSecrets")
 	}
 	Follower.(*TestFollower).count = 0
 
-	proof := s.BuildProof(g, big.NewInt(12345), commit, &secrets)
+	proof := s.buildProof(g, big.NewInt(12345), commit, &secrets)
 
-	if !s.VerifyProofStructure(proof) {
+	if !s.verifyProofStructure(proof) {
 		t.Error("Proof structure rejected")
 		return
 	}
 
-	bitProof := bitPederson.BuildProof(g, big.NewInt(12345))
-	bitProof.SetName("bit")
-	preProof := prePederson.BuildProof(g, big.NewInt(12345))
-	preProof.SetName("pre")
-	postProof := postPederson.BuildProof(g, big.NewInt(12345))
-	postProof.SetName("post")
-	mulProof := mulPederson.BuildProof(g, big.NewInt(12345))
-	mulProof.SetName("mul")
-	modProof := modPederson.BuildProof(g, big.NewInt(12345))
-	modProof.SetName("mod")
+	bitProof := bitPederson.buildProof(g, big.NewInt(12345))
+	bitProof.setName("bit")
+	preProof := prePederson.buildProof(g, big.NewInt(12345))
+	preProof.setName("pre")
+	postProof := postPederson.buildProof(g, big.NewInt(12345))
+	postProof.setName("post")
+	mulProof := mulPederson.buildProof(g, big.NewInt(12345))
+	mulProof.setName("mul")
+	modProof := modPederson.buildProof(g, big.NewInt(12345))
+	modProof.setName("mod")
 
 	proofBases := newBaseMerge(&g, &bitProof, &preProof, &postProof, &mulProof, &modProof)
 
-	listProof := s.GenerateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, proof)
+	listProof := s.generateCommitmentsFromProof(g, []*big.Int{}, big.NewInt(12345), &proofBases, proof)
 
-	if Follower.(*TestFollower).count != s.NumRangeProofs() {
+	if Follower.(*TestFollower).count != s.numRangeProofs() {
 		t.Error("Logging is off on GenerateCommitmentsFromProof")
 	}
 
@@ -79,8 +79,8 @@ func TestExpStepBFake(t *testing.T) {
 
 	s := newExpStepBStructure("bit", "pre", "post", "mul", "mod", 4)
 
-	proof := s.FakeProof(g)
-	if !s.VerifyProofStructure(proof) {
+	proof := s.fakeProof(g)
+	if !s.verifyProofStructure(proof) {
 		t.Error("Fake proof structure rejected")
 	}
 }
@@ -94,7 +94,7 @@ func TestExpStepBJSON(t *testing.T) {
 
 	s := newExpStepBStructure("bit", "pre", "post", "mul", "mod", 4)
 
-	proofBefore := s.FakeProof(g)
+	proofBefore := s.fakeProof(g)
 	proofJSON, err := json.Marshal(proofBefore)
 
 	if err != nil {
@@ -102,14 +102,14 @@ func TestExpStepBJSON(t *testing.T) {
 		return
 	}
 
-	var proofAfter expStepBProof
+	var proofAfter ExpStepBProof
 	err = json.Unmarshal(proofJSON, &proofAfter)
 
 	if err != nil {
 		t.Errorf("error during json unmarshal: %s", err.Error())
 		return
 	}
-	if !s.VerifyProofStructure(proofAfter) {
+	if !s.verifyProofStructure(proofAfter) {
 		t.Error("json'ed proof structure rejected")
 	}
 }
@@ -123,27 +123,27 @@ func TestExpStepBVerifyStructure(t *testing.T) {
 
 	s := newExpStepBStructure("bit", "pre", "post", "mul", "mod", 4)
 
-	proof := s.FakeProof(g)
+	proof := s.fakeProof(g)
 	proof.MulResult = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing mulresult")
 	}
 
-	proof = s.FakeProof(g)
+	proof = s.fakeProof(g)
 	proof.MulHiderResult = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing mulhiderresult")
 	}
 
-	proof = s.FakeProof(g)
+	proof = s.fakeProof(g)
 	proof.BitHiderResult = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting missing bithiderresult")
 	}
 
-	proof = s.FakeProof(g)
+	proof = s.fakeProof(g)
 	proof.MultiplicationProof.HiderResult = nil
-	if s.VerifyProofStructure(proof) {
+	if s.verifyProofStructure(proof) {
 		t.Error("Accepting corrupted multiplicationproof")
 	}
 }

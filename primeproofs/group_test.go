@@ -9,7 +9,7 @@ func TestGroupWithSafePrime(t *testing.T) {
 		t.Error("Failed to recognize safeprime")
 		return
 	}
-	if group.P == nil {
+	if group.p == nil {
 		t.Error("Missing group P")
 	}
 	if group.order == nil {
